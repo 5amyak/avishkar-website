@@ -1,5 +1,5 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const shortid = require("shortid");
 const User = require("../models/user");
@@ -73,13 +73,13 @@ router.post("/signin", async function(req, res, next) {
       httpOnly: true,
       maxAge: 86400 * 7
     });
-    isAuthenticated, res.json({ token, message: "login successful" });
+    res.json({ token, success: true, message: "login successful" });
   } catch (err) {
     next(err);
   }
 });
 //get userprofile
-router.get("/profile", async function(req, res, next) {
+router.get("/profile", isAuthenticated, async function(req, res, next) {
   try {
     const userid = req.decoded.id;
     const projection = {
