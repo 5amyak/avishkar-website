@@ -10,14 +10,15 @@ mongoose.connect(
 );
 
 const app = express();
-// app.use("/api", function(req, res, next) {
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept,x-access-token"
-//   );
-//   next();
-// });
+//CORS handler
+app.use("/api", function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "origin, x-requested-with, content-type, accept,x-access-token,cookie"
+  );
+  next();
+});
 app.use("/api", cookieParser());
 app.use("/api", bodyParser.urlencoded({ extended: false }));
 app.use("/api", bodyParser.json());
