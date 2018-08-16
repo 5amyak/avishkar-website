@@ -24,6 +24,9 @@ app.use("/api", bodyParser.urlencoded({ extended: false }));
 app.use("/api", bodyParser.json());
 app.use("/api", routes);
 app.use(errorHandler);
+app.use("*", function(req, res) {
+  res.sendStatus(404);
+});
 
 app.listen(3001, err => {
   if (err) throw err;
