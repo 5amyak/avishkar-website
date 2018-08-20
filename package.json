@@ -1,0 +1,28 @@
+{
+  "name": "avishkar-backend",
+  "version": "1.0.0",
+  "description": "Backend for the Avishkar's app",
+  "main": "server.js",
+  "scripts": {
+    "test": "mocha test/index.js",
+    "dev": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.18.3",
+    "cookie-parser": "^1.4.3",
+    "dotenv": "^6.0.0",
+    "express": "^4.16.3",
+    "jsonwebtoken": "^8.3.0",
+    "mongoose": "^5.2.6",
+    "shortid": "^2.2.12"
+  },
+  "devDependencies": {
+    "cross-env": "^5.2.0",
+    "mocha": "^5.2.0",
+    "nodemon": "^1.18.3",
+    "supertest": "^3.1.0"
+  }
+}
