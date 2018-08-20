@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "mocha test/index.js",
-    "dev": "nodemon server.js"
+    "dev": "cross-env NODE_ENV=dev nodemon server.js",
+    "start": "npm start"
   },
   "author": "",
   "license": "ISC",
