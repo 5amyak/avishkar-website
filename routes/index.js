@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const shortid = require("shortid");
 const User = require("../models/user");
 const Team = require("../models/team");
+const Event = require("../models/event");
 const isAuthenticated = require("../utils/is-authenticated");
 const isValidEvent = require("../utils/isValidEvent");
 const router = express.Router();
@@ -17,7 +18,7 @@ router.post("/signup", async function(req, res, next) {
       .select("email")
       .lean();
     if (user) {
-      return res.status(400).json({
+      return res.json({
         success: false,
         message: "This email is already taken"
       });
@@ -51,7 +52,7 @@ router.post("/signup", async function(req, res, next) {
     const token = jwt.sign({ id: savedUser._id }, jwtSecret);
     res.cookie("user", token, {
       httpOnly: true,
-      maxAge: 86400 * 7
+      maxAge: 86400 * 7 * 1000
     });
     res.json({ token, success: true, message: "user created" });
   } catch (err) {
@@ -71,7 +72,7 @@ router.post("/signin", async function(req, res, next) {
     const token = jwt.sign({ id: user._id }, jwtSecret);
     res.cookie("user", token, {
       httpOnly: true,
-      maxAge: 86400 * 7
+      maxAge: 86400 * 7 * 1000
     });
     res.json({ token, success: true, message: "login successful" });
   } catch (err) {
@@ -157,23 +158,26 @@ router.post("/register-event", isAuthenticated, async function(req, res, next) {
       });
     }
     const { eventName } = req.body;
-    console.log({ eventName });
-    if (!isValidEvent(eventName)) {
+    const eventProjection = {
+      info: 0,
+      category: 0,
+      _id: 0
+    };
+    const event = await Event.findOne({ name: eventName })
+      .select(eventProjection)
+      .lean();
+    if (!event) {
       return res.status(400).json({
         success: "false",
         message: `Invalid Event`
       });
     }
-    user.registeredEvents.push(eventName);
+    user.registeredEvents.push(event);
     const savedUser = await user.save();
-    if (savedUser.registeredEvents.includes(eventName)) {
-      res.json({
-        success: true,
-        message: `Registered for ${eventName} successfully`
-      });
-    } else {
-      next(err);
-    }
+    res.json({
+      success: true,
+      message: `Registered for ${eventName} successfully`
+    });
   } catch (err) {
     next(err);
   }
@@ -199,7 +203,98 @@ router.get("/registered-events", isAuthenticated, async function(
     next(err);
   }
 });
+//check if team name is already taken
+router.post("/is-teamname-available", isAuthenticated, async function(
+  req,
+  res,
+  next
+) {
+  const { teamName, eventName } = req.body;
+  const team = await Team.findOne({ team: teamName, event: eventName });
+  if (!team) {
+    return res.json({
+      success: true,
+      message: `${teamName} is available for ${eventName}`
+    });
+  }
+  return res.json({
+    success: false,
+    message: `Someone took this name for ${eventName}`
+  });
+});
+//get teamsize of event
+router.get("/size/:eventName", async function(req, res, next) {
+  const { eventName } = req.params;
+  const event = await Event.findOne({ name: eventName })
+    .select("size")
+    .lean();
+  console.log(event);
+  res.json({ success: true, event });
+});
+//get teams/events of user(created,invited and invite sent)
+router.post("/get-all-teams", isAuthenticated, async function(req, res, next) {
+  const { eventName } = req.body;
+  const userId = req.decoded.id;
+  const user = await User.findById(userId)
+    .select("email")
+    .lean();
+  const dbQuery = {
+    "users.email": user.email
+  };
+  const teams = Teams.find(dbQuery)
+    .select("event")
+    .lean();
+  res.json({
+    success: true,
+    teams
+  });
+});
+//check user availability for a team
+router.post("/check-user-availability", async (req, res, next) => {
+  try {
+    const { email, eventName } = req.body;
+    //check if email exists and user is registered
+    const dbuser = await User.findOne({ email }).lean();
+    if (!dbuser)
+      return res.status(400).send({ success: false, message: "Invalid Email" });
+    const isRegistered = dbuser.registeredEvents.some(function(event) {
+      return event.name === eventName;
+    });
+    if (!isRegistered) {
+      return res.json({
+        success: false,
+        message: `${dbuser.name} hasn't yet registered for ${eventName}`
+      });
+    }
 
+    //check if the users already have a team or invited
+    const dbQuery = {
+      $and: [{ event: eventName }, { "users.email": email }]
+    };
+    const team = await Team.find(dbQuery).lean();
+    const [user] = team.users.filter(function(user) {
+      return user.email == email;
+    });
+    if (user.status == "pending") {
+      return res.json({
+        success: false,
+        message: "Someone already sent them a request!"
+      });
+    } else if (user.status == "member") {
+      return res.json({
+        success: false,
+        message: "This user already has a team for ${eventName}!"
+      });
+    }
+    //checks passed
+    res.json({
+      success: true,
+      message: "User available"
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 //create team
 router.post("/create-team", isAuthenticated, async function(req, res, next) {
   try {
@@ -221,7 +316,7 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
       const user = await User.findOne({ email: invitedEmails[i] }).lean();
       if (!user)
         return res
-          .satus(400)
+          .status(400)
           .send({ success: false, message: "Invalid Email" });
       if (!user.registeredEvents.includes(eventName)) {
         return res.json({
@@ -231,7 +326,7 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
       }
     }
 
-    //check if the users already have a team
+    //check if the users already have a team or invited
     for (let i = 0; i < invitedEmails.length; i++) {
       const dbQuery = {
         $and: [{ event: eventName }, { "users.email": invitedEmails[i] }]
@@ -335,5 +430,15 @@ router.get("/teams", isAuthenticated, async function(req, res, next) {
     success: true
   });
 });
-
+//store
+router.post("/store", async function(req, res) {
+  const { data } = req.body;
+  Event.insertMany(data)
+    .then(function(ok) {
+      res.send(ok);
+    })
+    .catch(err => {
+      res.send(err);
+    });
+});
 module.exports = router;
