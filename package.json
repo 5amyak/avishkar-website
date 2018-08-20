@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha test/index.js",
     "dev": "cross-env NODE_ENV=dev nodemon server.js",
-    "start":"npm start"
+    "start": "npm start"
   },
   "author": "",
   "license": "ISC",

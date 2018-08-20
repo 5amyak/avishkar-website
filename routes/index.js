@@ -144,6 +144,34 @@ router.get("/referrals", isAuthenticated, async function(req, res) {
     next(err);
   }
 });
+//fetch all event-names
+router.get("/all-events", isAuthenticated, async function(req, res, next) {
+  try {
+    const events = await Event.find({}).select({
+      name: 1,
+      displayName: 1,
+      _id: 0
+    });
+    res.json({ success: true, events });
+  } catch (err) {
+    next(err);
+  }
+});
+//fetch event info
+router.post("/fetch-event-info", isAuthenticated, async function(
+  req,
+  res,
+  next
+) {
+  try {
+    const { eventDisplayName } = req.body;
+    const event = await Event.findOne({ displayName: eventDisplayName });
+    if (event) return res.json({ success: true, event });
+    res.json({ success: false });
+  } catch (err) {
+    next(err);
+  }
+});
 // register for an event
 router.post("/register-event", isAuthenticated, async function(req, res, next) {
   try {
@@ -203,6 +231,58 @@ router.get("/registered-events", isAuthenticated, async function(
     next(err);
   }
 });
+//check user availability for a team
+// router.post(
+//   "/check-user-availability",
+//   isAuthenticated,
+//   async (req, res, next) => {
+//     try {
+//       const { email, eventName } = req.body;
+//       //check if email exists and user is registered
+//       const dbuser = await User.findOne({ email }).lean();
+//       if (!dbuser)
+//         return res.send({ success: false, message: "Invalid Email" });
+//       if (!dbuser.registeredEvents.includes(eventName)) {
+//         return res.json({
+//           success: false,
+//           message: `${dbuser.name} hasn't yet registered for ${eventName}`
+//         });
+//       }
+
+//       //check if the users already have a team or invited
+//       const dbQuery = {
+//         $and: [{ event: eventName }, { "users.email": email }]
+//       };
+//       const team = await Team.find(dbQuery)
+//         .limit(1)
+//         .lean();
+//       if (team.length === 0) {
+//         //checks passed
+//         return res.json({
+//           success: true,
+//           message: "User available"
+//         });
+//       }
+//       const [user] = team[0].users.filter(function(user) {
+//         return user.email == email;
+//       });
+//       if (user.status == "pending") {
+//         return res.json({
+//           success: false,
+//           message: "Someone already sent them a request!"
+//         });
+//       } else if (user.status == "member") {
+//         return res.json({
+//           success: false,
+//           message: "This user already has a team for ${eventName}!"
+//         });
+//       }
+//     } catch (err) {
+//       next(err);
+//     }
+//   }
+// );
+
 //check if team name is already taken
 router.post("/is-teamname-available", isAuthenticated, async function(
   req,
@@ -232,8 +312,7 @@ router.get("/size/:eventName", async function(req, res, next) {
   res.json({ success: true, event });
 });
 //get teams/events of user(created,invited and invite sent)
-router.post("/get-all-teams", isAuthenticated, async function(req, res, next) {
-  const { eventName } = req.body;
+router.get("/get-all-teams", isAuthenticated, async function(req, res, next) {
   const userId = req.decoded.id;
   const user = await User.findById(userId)
     .select("email")
@@ -272,7 +351,14 @@ router.post("/check-user-availability", async (req, res, next) => {
       $and: [{ event: eventName }, { "users.email": email }]
     };
     const team = await Team.find(dbQuery).lean();
-    const [user] = team.users.filter(function(user) {
+    if (team.length === 0) {
+      //checks passed
+      return res.json({
+        success: true,
+        message: "User available"
+      });
+    }
+    const [user] = team[0].users.filter(function(user) {
       return user.email == email;
     });
     if (user.status == "pending") {
@@ -299,11 +385,15 @@ router.post("/check-user-availability", async (req, res, next) => {
 router.post("/create-team", isAuthenticated, async function(req, res, next) {
   try {
     const { invitedEmails, eventName, teamName } = req.body;
+    //TODO check the team size and eventName
     const userId = req.decoded.id;
 
     //check if the user is registered for the event
     const user = await User.findById(userId).lean();
-    if (!user.registeredEvents.includes(eventName)) {
+    const isRegistered = user.registeredEvents.some(function(event) {
+      return event.name === eventName;
+    });
+    if (!isRegistered) {
       return res.json({
         success: false,
         message: `You haven't yet registered for ${eventName}`
@@ -318,7 +408,10 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
         return res
           .status(400)
           .send({ success: false, message: "Invalid Email" });
-      if (!user.registeredEvents.includes(eventName)) {
+      const isRegistered = user.registeredEvents.some(function(event) {
+        return event.name === eventName;
+      });
+      if (!isRegistered) {
         return res.json({
           success: false,
           message: `${user.name} hasn't yet registered for ${eventName}`
@@ -332,7 +425,10 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
         $and: [{ event: eventName }, { "users.email": invitedEmails[i] }]
       };
       const team = await Team.find(dbQuery).lean();
-      const [user] = team.users.filter(function(user) {
+      if (team.length === 0) {
+        continue;
+      }
+      const [user] = team[0].users.filter(function(user) {
         return user.email == invitedEmails[i];
       });
       if (user.status == "pending") {
@@ -361,12 +457,13 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
     });
     const team = new Team({
       name: teamName,
-      users: [...sender, ...receivers]
+      users: [...sender, ...receivers],
+      event: eventName
     });
     const savedTeam = await team.save();
     res.json({
       success: true,
-      team: save
+      team: savedTeam
     });
   } catch (err) {
     next(err);
@@ -379,7 +476,7 @@ router.get("/team-requests", isAuthenticated, async function(req, res, next) {
     const userId = req.decoded.id;
     const user = await User.findById(userId).lean();
     const dbQuery = {
-      user: { email: user.email, status: "pending" }
+      users: { email: user.email, status: "pending" }
     };
     const teams = await Team.find(dbQuery);
     res.json({
@@ -405,6 +502,7 @@ router.post("/accept-request", isAuthenticated, async function(req, res, next) {
       return teamUser;
     });
     team.users = users;
+    team.markModified("users");
     const savedTeam = await team.save();
     res.json({
       team: savedTeam,
@@ -421,8 +519,11 @@ router.get("/teams", isAuthenticated, async function(req, res, next) {
   const user = await User.findById(userId);
   // send those that match email & status not equal to pending
   const dbQuery = {
-    //user: { email: user.email, status: { $ne: "pending" } }
-    $and: [{ "user.email": user.email }, { "user.status": { $ne: "pending" } }]
+    // users: { email: user.email, status: { $ne: "pending" } }
+    $and: [
+      { "users.email": user.email },
+      { "users.status": { $ne: "pending" } }
+    ]
   };
   const teams = await Team.find(dbQuery);
   res.json({
