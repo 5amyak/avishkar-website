@@ -13,6 +13,7 @@ const app = express();
 //CORS handler
 app.use("/api", function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Credentials", "true");
   res.header(
     "Access-Control-Allow-Headers",
     "origin, x-requested-with, content-type, accept,x-access-token,cookie"
