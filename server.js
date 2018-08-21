@@ -1,7 +1,5 @@
+require("dotenv").config();
 const isProduction = require("./utils/isProduction");
-if (!isProduction) {
-  require("dotenv").config();
-}
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
@@ -9,7 +7,7 @@ const bodyParser = require("body-parser");
 const routes = require("./routes");
 const errorHandler = require("./utils/error-handler");
 const allowedOrigins = [
-  "https://avishkarmnnit.in",
+  "https://www.avishkarmnnit.in",
   "https://avishkar.mnnit.ac.in"
 ];
 mongoose.connect(
@@ -26,6 +24,7 @@ app.use("/api", function(req, res, next) {
     }
     res.header("Access-Control-Allow-Origin", origin);
     res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
     res.header(
       "Access-Control-Allow-Headers",
       "origin, x-requested-with, content-type, accept,cookie"
