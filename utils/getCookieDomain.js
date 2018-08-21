@@ -1,8 +1,10 @@
 const isProduction = require("./isProduction");
 module.exports = function(origin) {
   if (isProduction) {
-    const domain = origin.slice(8); //strip "https://"
-    return domain;
+    if(origin === "https://www.avishkarmnnit.in")
+    return ".avishkarmnnit.in";
+    else if(origin === "https://avishkar.mnnit.ac.in")
+    return ".mnnit.ac.in";
   }
   return "localhost";
 };
