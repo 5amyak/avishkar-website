@@ -1,10 +1,13 @@
+const isProduction = require("./utils/isProduction");
+if (!isProduction) {
+  require("dotenv").config();
+}
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const routes = require("./routes");
 const errorHandler = require("./utils/error-handler");
-const isProduction = require("./utils/isProduction");
 const allowedOrigins = [
   "https://avishkarmnnit.in",
   "https://avishkar.mnnit.ac.in"
