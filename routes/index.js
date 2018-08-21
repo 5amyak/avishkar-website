@@ -6,10 +6,10 @@ const User = require("../models/user");
 const Team = require("../models/team");
 const Event = require("../models/event");
 const isAuthenticated = require("../utils/is-authenticated");
-const isValidEvent = require("../utils/isValidEvent");
 const router = express.Router();
 const saltRounds = 10;
 const jwtSecret = "secret";
+const getCookieDomain = require("../utils/getCookieDomain");
 //signup
 router.post("/signup", async function(req, res, next) {
   try {
@@ -52,7 +52,8 @@ router.post("/signup", async function(req, res, next) {
     const token = jwt.sign({ id: savedUser._id }, jwtSecret);
     res.cookie("user", token, {
       httpOnly: true,
-      maxAge: 86400 * 7 * 1000
+      maxAge: 86400 * 7 * 1000,
+      domain: getCookieDomain(req.header("origin"))
     });
     res.json({ token, success: true, message: "user created" });
   } catch (err) {
@@ -72,7 +73,8 @@ router.post("/signin", async function(req, res, next) {
     const token = jwt.sign({ id: user._id }, jwtSecret);
     res.cookie("user", token, {
       httpOnly: true,
-      maxAge: 86400 * 7 * 1000
+      maxAge: 86400 * 7 * 1000,
+      domain: getCookieDomain(req.header("origin"))
     });
     res.json({ token, success: true, message: "login successful" });
   } catch (err) {
@@ -200,6 +202,17 @@ router.post("/register-event", isAuthenticated, async function(req, res, next) {
         message: `Invalid Event`
       });
     }
+    //check if user is already registered
+    const isRegistered = user.registeredEvents.some(function(event) {
+      return event.name === eventName;
+    });
+    if (isRegistered) {
+      return res.json({
+        success: false,
+        message: `You already registered for ${eventName}!`
+      });
+    }
+    //now register
     user.registeredEvents.push(event);
     const savedUser = await user.save();
     res.json({
@@ -231,57 +244,6 @@ router.get("/registered-events", isAuthenticated, async function(
     next(err);
   }
 });
-//check user availability for a team
-// router.post(
-//   "/check-user-availability",
-//   isAuthenticated,
-//   async (req, res, next) => {
-//     try {
-//       const { email, eventName } = req.body;
-//       //check if email exists and user is registered
-//       const dbuser = await User.findOne({ email }).lean();
-//       if (!dbuser)
-//         return res.send({ success: false, message: "Invalid Email" });
-//       if (!dbuser.registeredEvents.includes(eventName)) {
-//         return res.json({
-//           success: false,
-//           message: `${dbuser.name} hasn't yet registered for ${eventName}`
-//         });
-//       }
-
-//       //check if the users already have a team or invited
-//       const dbQuery = {
-//         $and: [{ event: eventName }, { "users.email": email }]
-//       };
-//       const team = await Team.find(dbQuery)
-//         .limit(1)
-//         .lean();
-//       if (team.length === 0) {
-//         //checks passed
-//         return res.json({
-//           success: true,
-//           message: "User available"
-//         });
-//       }
-//       const [user] = team[0].users.filter(function(user) {
-//         return user.email == email;
-//       });
-//       if (user.status == "pending") {
-//         return res.json({
-//           success: false,
-//           message: "Someone already sent them a request!"
-//         });
-//       } else if (user.status == "member") {
-//         return res.json({
-//           success: false,
-//           message: "This user already has a team for ${eventName}!"
-//         });
-//       }
-//     } catch (err) {
-//       next(err);
-//     }
-//   }
-// );
 
 //check if team name is already taken
 router.post("/is-teamname-available", isAuthenticated, async function(
@@ -320,7 +282,7 @@ router.get("/get-all-teams", isAuthenticated, async function(req, res, next) {
   const dbQuery = {
     "users.email": user.email
   };
-  const teams = Teams.find(dbQuery)
+  const teams = await Teams.find(dbQuery)
     .select("event")
     .lean();
   res.json({
