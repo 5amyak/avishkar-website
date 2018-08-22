@@ -181,11 +181,25 @@ router.post("/register-event", isAuthenticated, async function(req, res, next) {
     const maxEventsToRegister = 5;
     if (user.registeredEvents.length >= maxEventsToRegister) {
       return res.json({
-        success: "false",
+        success: false,
         message: `You can only register upto ${maxEventsToRegister} events`
       });
     }
     const { eventName } = req.body;
+    const { registeredEvents } = user;
+    let check = -1;
+    for (let i = 0; i < registeredEvents.length; i++) {
+      if (registeredEvents[i].name === eventName) {
+        check = 100;
+        break;
+      }
+    }
+    if (check > 0) {
+      return res.json({
+        success: false,
+        message: `You are already registered for this event`
+      });
+    }
     const eventProjection = {
       info: 0,
       category: 0,
@@ -196,7 +210,7 @@ router.post("/register-event", isAuthenticated, async function(req, res, next) {
       .lean();
     if (!event) {
       return res.status(400).json({
-        success: "false",
+        success: false,
         message: `Invalid Event`
       });
     }
@@ -320,7 +334,7 @@ router.get("/get-all-teams", isAuthenticated, async function(req, res, next) {
   const dbQuery = {
     "users.email": user.email
   };
-  const teams = Teams.find(dbQuery)
+  const teams = await Team.find(dbQuery)
     .select("event")
     .lean();
   res.json({
@@ -487,7 +501,26 @@ router.get("/team-requests", isAuthenticated, async function(req, res, next) {
     next(err);
   }
 });
-
+//pending-request
+router.get("/pending-request", isAuthenticated, async function(req, res, next) {
+  try {
+    const userId = req.decoded.id;
+    const user = await User.findById(userId).lean();
+    const dbQuery = {
+      $and: [
+        { users: { email: user.email, status: "leader" } },
+        { "users.status": "pending" }
+      ]
+    };
+    const pendingTeams = await Team.find(dbQuery);
+    res.json({
+      success: true,
+      pendingTeams
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 //accept team request
 router.post("/accept-request", isAuthenticated, async function(req, res, next) {
   try {
