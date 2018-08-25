@@ -282,7 +282,7 @@ router.get("/get-all-teams", isAuthenticated, async function(req, res, next) {
   const dbQuery = {
     "users.email": user.email
   };
-  const teams = await Teams.find(dbQuery)
+  const teams = await Team.find(dbQuery)
     .select("event")
     .lean();
   res.json({

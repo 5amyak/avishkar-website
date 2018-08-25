@@ -7,11 +7,13 @@ const eventSchema = mongoose.Schema({
 const userSchema = mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  phone: { type: String, required: true },
-  college: { type: String, required: true },
+  gender: { type: String, enum: ["male", "female", "others"] },
+  picture: { type: String },
+  password: { type: String },
+  phone: { type: String },
+  college: { type: String },
   year: { type: Number },
-  referralCode: { type: String, required: true, unique: true },
+  referralCode: { type: String, unique: true },
   referredBy: { code: { type: String }, status: { type: Number, default: 0 } },
   registeredEvents: [eventSchema],
   requestsSent: [{ event: { type: String }, to: { type: String } }]
