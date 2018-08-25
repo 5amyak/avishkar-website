@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const routes = require("./routes");
+const socialAuthRoutes = require("./routes/social-auth");
 const errorHandler = require("./utils/error-handler");
 const allowedOrigins = [
   "https://www.avishkarmnnit.in",
@@ -37,6 +38,7 @@ app.use("/api", cookieParser());
 app.use("/api", bodyParser.urlencoded({ extended: false }));
 app.use("/api", bodyParser.json());
 app.use("/api", routes);
+app.use("/api", socialAuthRoutes);
 app.use(errorHandler);
 app.use("*", function(req, res) {
   res.sendStatus(404);
