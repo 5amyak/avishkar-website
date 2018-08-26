@@ -1,86 +1,10 @@
 const express = require("express");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const shortid = require("shortid");
 const User = require("../models/user");
 const Team = require("../models/team");
 const Event = require("../models/event");
 const isAuthenticated = require("../utils/is-authenticated");
 const router = express.Router();
-const saltRounds = 10;
-const jwtSecret = "secret";
-const getCookieDomain = require("../utils/getCookieDomain");
-//signup
-router.post("/signup", async function(req, res, next) {
-  try {
-    const { name, password, email, phone, college, code } = req.body;
-    const user = await User.findOne({ email })
-      .select("email")
-      .lean();
-    if (user) {
-      return res.json({
-        success: false,
-        message: "This email is already taken"
-      });
-      //todo: check for phone also
-    }
-    const pwdHash = await bcrypt.hash(password, saltRounds);
-    const userData = {
-      name,
-      email,
-      phone,
-      college,
-      password: pwdHash,
-      referralCode: shortid.generate()
-    };
-    if (code) {
-      const isValidCode = await User.findOne({ referralCode: code })
-        .select("refferalCode")
-        .lean();
-      if (!isValidCode) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid refferal code" });
-      } else {
-        userData.referredBy = { code };
-      }
-    }
 
-    const newUser = new User(userData);
-    const savedUser = await newUser.save();
-    //login the user now
-    const token = jwt.sign({ id: savedUser._id }, jwtSecret);
-    res.cookie("user", token, {
-      httpOnly: true,
-      maxAge: 86400 * 7 * 1000,
-      domain: getCookieDomain(req.header("origin"))
-    });
-    res.json({ token, success: true, message: "user created" });
-  } catch (err) {
-    next(err);
-  }
-});
-
-//signin
-router.post("/signin", async function(req, res, next) {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email }).lean();
-    if (!user) return res.json({ message: "Incorrect details" });
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ message: "Incorrect details" });
-    //login the user now
-    const token = jwt.sign({ id: user._id }, jwtSecret);
-    res.cookie("user", token, {
-      httpOnly: true,
-      maxAge: 86400 * 7 * 1000,
-      domain: getCookieDomain(req.header("origin"))
-    });
-    res.json({ token, success: true, message: "login successful" });
-  } catch (err) {
-    next(err);
-  }
-});
 //get userprofile
 router.get("/profile", isAuthenticated, async function(req, res, next) {
   try {
@@ -88,11 +12,38 @@ router.get("/profile", isAuthenticated, async function(req, res, next) {
     const projection = {
       name: 1,
       email: 1,
-      phone: 1,
-      college: 1
+      gender: 1,
+      city: 1,
+      college: 1,
+      updatedProfile: 1
     };
     const user = await User.findOne({ _id: userid }, projection);
     res.json({ profile: user });
+  } catch (err) {
+    next(err);
+  }
+});
+//update profile
+router.post("/update-profile", isAuthenticated, async function(req, res, next) {
+  try {
+    const profile = req.body;
+    const user = await User.findById(req.decoded.id);
+    if (user.updatedProfile) {
+      return res.status(400).json({
+        success: false,
+        message: "You had already updated the profile!"
+      });
+    }
+    user.name = profile.name;
+    user.gender = profile.gender;
+    user.city = profile.city;
+    user.college = profile.college;
+    user.updatedProfile = true;
+    const savedUser = await user.save();
+    res.json({
+      success: true,
+      message: "Updated profile successfully!"
+    });
   } catch (err) {
     next(err);
   }
