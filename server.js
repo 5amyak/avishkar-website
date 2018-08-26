@@ -1,23 +1,36 @@
+require("dotenv").config();
+const isProduction = require("./utils/isProduction");
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const routes = require("./routes");
 const errorHandler = require("./utils/error-handler");
+const allowedOrigins = [
+  "https://www.avishkarmnnit.in",
+  "https://avishkar.mnnit.ac.in"
+];
 mongoose.connect(
   "mongodb://localhost:27017/avishkar",
   { useNewUrlParser: true }
 );
-
 const app = express();
 //CORS handler
 app.use("/api", function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "origin, x-requested-with, content-type, accept,x-access-token,cookie"
-  );
+  if (isProduction) {
+    const origin = req.get("origin");
+    if (!allowedOrigins.includes(origin)) {
+      return res.sendStatus(403);
+    }
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "origin, x-requested-with, content-type, accept,cookie"
+    );
+  }
+
   next();
 });
 app.use("/api", cookieParser());
