@@ -11,13 +11,20 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.18.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.3",
+    "config": "^2.0.1",
     "cookie-parser": "^1.4.3",
     "dotenv": "^6.0.0",
+    "ejs": "^2.6.1",
     "express": "^4.16.3",
+    "googleapis": "^33.0.0",
     "jsonwebtoken": "^8.3.0",
+    "mailgun-js": "^0.20.0",
     "mongoose": "^5.2.6",
+    "qs": "^6.5.2",
+    "request-promise": "^4.2.2",
     "shortid": "^2.2.12"
   },
   "devDependencies": {
