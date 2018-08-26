@@ -98,14 +98,40 @@ router.get("/referrals", isAuthenticated, async function(req, res) {
   }
 });
 //fetch all event-names
-router.get("/all-events", isAuthenticated, async function(req, res, next) {
+router.get("/all-events", async function(req, res, next) {
   try {
     const events = await Event.find({}).select({
       name: 1,
       displayName: 1,
+      category: 1,
       _id: 0
     });
     res.json({ success: true, events });
+  } catch (err) {
+    next(err);
+  }
+});
+//fetch-all-categories
+router.get("/event-categories", async function(req, res, next) {
+  try {
+    const categories = await Event.distinct("category");
+    res.json({
+      success: true,
+      categories
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+//fetch-category events
+router.post("/fetch-category-events", async function(req, res, next) {
+  try {
+    const { category } = req.body;
+    const subEvents = await Event.find({ category });
+    res.json({
+      success: true,
+      subEvents
+    });
   } catch (err) {
     next(err);
   }
