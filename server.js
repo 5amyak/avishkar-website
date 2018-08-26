@@ -9,7 +9,8 @@ const authRoutes = require("./routes/auth");
 const errorHandler = require("./utils/error-handler");
 const allowedOrigins = [
   "https://www.avishkarmnnit.in",
-  "https://avishkar.mnnit.ac.in"
+  "https://avishkar.mnnit.ac.in",
+  "https://api.avishkarmnnit.in"
 ];
 mongoose.connect(
   "mongodb://localhost:27017/avishkar",
@@ -19,7 +20,7 @@ const app = express();
 //CORS handler
 app.use("/api", function(req, res, next) {
   if (isProduction) {
-    const origin = req.get("origin");
+    const origin = req.get("origin") || "https://api.avishkarmnnit.in";
     if (!allowedOrigins.includes(origin)) {
       return res.sendStatus(403);
     }
