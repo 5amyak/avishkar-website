@@ -350,7 +350,20 @@ router.post("/new-password", async function(req, res, next) {
     next(err);
   }
 });
-//
+//is user logged in
+router.get("/check-state", async function(req, res, next) {
+  try {
+    const token = req.cookies.user;
+    if (!token) return res.json({ success: false });
+
+    jwt.verify(token, jwtSecret, function(err) {
+      if (err) return res.json({ success: false });
+      res.json({ success: true });
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 //logout
 router.get("/logout", async function(req, res) {
   res.clearCookie("user");
