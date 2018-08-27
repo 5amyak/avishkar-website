@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 const uniqid = require("uniqid");
 const getCookieDomain = require("../utils/getCookieDomain");
 const sendVerificationEmail = require("../utils/sendVerificationEmail");
+const sendResetEmail = require("../utils/sendResetEmail");
 const User = require("../models/user");
 const setJwtCookie = require("../utils/setJwtCookie");
 const isProduction = require("../utils/isProduction");
@@ -174,7 +175,7 @@ router.get("/fblogin", async function(req, res, next) {
 //signup
 router.post("/signup", async function(req, res, next) {
   try {
-    const { name, password, email, phone, college } = req.body;
+    const { name, password, email, college } = req.body;
     const user = await User.findOne({ email })
       .select("email")
       .lean();
@@ -205,13 +206,12 @@ router.post("/signup", async function(req, res, next) {
       verifyToken
     });
     //login the user now
-    //send email
-    // const token = jwt.sign({ id: savedUser._id }, jwtSecret);
-    // res.cookie("user", token, {
-    //   httpOnly: true,
-    //   maxAge: 86400 * 7 * 1000,
-    //   domain: getCookieDomain(req.header("origin"))
-    // });
+    const token = jwt.sign({ id: savedUser._id }, jwtSecret);
+    res.cookie("user", token, {
+      httpOnly: true,
+      maxAge: 86400 * 7 * 1000,
+      domain: getCookieDomain(req.header("origin"))
+    });
     res.json({
       success: true,
       message: `verfication link sent to ${savedUser.email}`
@@ -247,6 +247,13 @@ router.post("/signin", async function(req, res, next) {
     const { email, password } = req.body;
     const user = await User.findOne({ email }).lean();
     if (!user) return res.json({ message: "Incorrect details" });
+    if (!user.password) {
+      //happens if signedup with google or fb
+      return res.json({
+        success: false,
+        message: "Incorrect password"
+      });
+    }
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Incorrect details" });
     //login the user now
@@ -288,18 +295,60 @@ router.get("/verify-email/:verifyToken", async function(req, res) {
     });
   }
 });
-//forgot password
-router.post("/forgot-password", async function(req, res) {
-  const { email } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) {
-    res.sendStatus(400);
+//send email - forgot password
+router.post("/forgot-password", async function(req, res, next) {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.json({
+        success: false,
+        message: `No account exists with the email ${email}`
+      });
+    }
+    const randBuffer = await randBytesAsync(8);
+    const resetToken = randBuffer.toString("hex");
+    user.set({ resetToken });
+    user.set({ resetTokenExpiry: Date.now() + 10 * 60 * 1000 });
+    const savedUser = await user.save();
+    //send reset email
+    const emailRes = await sendResetEmail({
+      email,
+      name: user.name,
+      resetToken: user.resetToken
+    });
+    return res.json({
+      success: true,
+      message: `A reset code is sent to ${email}`
+    });
+  } catch (err) {
+    next(err);
   }
-  const randBuffer = await randBytesAsync(20);
-  const resetToken = randBuffer.toString("hex");
-  user.set({ resetToken });
-  const savedUser = await user.save();
-  //send reset email
+});
+//save new password
+router.post("/new-password", async function(req, res, next) {
+  try {
+    const { resetToken, password } = req.body;
+    const user = await User.findOne({ resetToken });
+    if (!user) {
+      return res.json({ success: false, message: "Invalid one time password" });
+    }
+    if (user.resetTokenExpiry < Date.now()) {
+      return res.json({
+        success: false,
+        message: "Oops the OTP expired!"
+      });
+    }
+    const pwdHash = await bcrypt.hash(password, saltRounds);
+    user.set({ password: pwdHash, resetTokenExpiry: Date.now() });
+    const savedUser = await user.save();
+    res.json({
+      success: true,
+      message: "password reset successfully"
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 //
 //logout
