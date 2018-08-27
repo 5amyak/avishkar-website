@@ -6,8 +6,8 @@
     <title>Document</title>
 </head>
 <body>
-    <p>Hello <%= name %>, Your one time password for password reset is</p> 
-    <p><strong> <%= resetToken %></strong></p>
-    <p>Regards - Avishkar 2018 Team,MNNIT Allahabad - 211004</p>
+    <p>Hello <%= name %>, click the link below to verify your email</p> 
+    <a href="<%= verifyLink %>"><%= verifyLink %></a>
+    <p>Regards - Avishkar 2018,MNNIT Allahabad - 211004</p>
 </body>
 </html>
