@@ -10,7 +10,7 @@ const userSchema = mongoose.Schema({
   gender: { type: String }, //TODO: Add enum
   picture: { type: String },
   password: { type: String },
-  phone: { type: String },
+  // phone: { type: String },
   college: { type: String },
   year: { type: Number },
   //referralCode: { type: String, unique: true },
@@ -21,7 +21,8 @@ const userSchema = mongoose.Schema({
   paymentDone: { type: Boolean, default: false },
   emailVerified: { type: Boolean, default: false },
   verifyToken: { type: String },
-  resetToken: { type: String }
+  resetToken: { type: String },
+  resetTokenExpiry: { type: Date }
 });
 
 const User = mongoose.model("User", userSchema);

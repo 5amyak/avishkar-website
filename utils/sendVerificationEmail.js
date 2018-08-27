@@ -26,14 +26,14 @@ function mailgunSendAsync(data) {
   });
 }
 async function sendEmail({ email, name, verifyToken }) {
-  const verifyLink = `${baseUrl}/verify-email/${verifyToken}`;
-  const fileString = await readFileAsync("./views/reset-password.ejs", "utf-8");
+  const verifyLink = `${baseUrl}/api/verify-email/${verifyToken}`;
+  const fileString = await readFileAsync("./views/verify-email.ejs", "utf-8");
   const html = ejs.render(fileString, { name, verifyLink });
 
   const data = {
     from: "Avishkar MNNIT <avishkar2017.mnnit@gmail.com>",
     to: email,
-    subject: "Password reset instructions",
+    subject: "Verify your email",
     html
   };
   const resBody = await mailgunSendAsync(data);
