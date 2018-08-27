@@ -1,0 +1,14 @@
+{
+	"Config": {
+		"fb_details": {
+			"client_id" : "312439929514084",
+			"redirect_uri" : "https://api.avishkarmnnit.in/api/fblogin",
+			"client_secret": "c7b56a1afd7f0f447d3db501a8c23986"
+		},
+		"google_details": {
+			"client_id" : "358161711406-84nhpo4a26uh4koio9g44gdpel796i41.apps.googleusercontent.com",
+			"redirect_uri" : "https://api.avishkarmnnit.in/api/glogin",
+			"client_secret": "6wauks5qc6w-JgOw28gLZM_-"
+		}
+	}
+}
