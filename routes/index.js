@@ -460,16 +460,24 @@ router.get("/pending-request", isAuthenticated, async function(req, res, next) {
     next(err);
   }
 });
-//accept team request
-router.post("/accept-request", isAuthenticated, async function(req, res, next) {
+//accept or reject team request
+router.post("/respond-to-request", isAuthenticated, async function(
+  req,
+  res,
+  next
+) {
   try {
-    const { teamId } = req.body;
+    const { teamId, action } = req.body;
+    let userStatus;
+    if (action === "accept") userStatus = "member";
+    else if (action === "reject") userStatus = "refusenik";
+    else return res.sendStatus(400);
     const userId = req.decoded.id;
     const user = await User.findById(userId).lean();
     const team = await Team.findById(teamId);
     const users = team.users.filter(function(teamUser) {
       if (teamUser.email == user.email && teamUser.status == "pending") {
-        teamUser.status = "member";
+        teamUser.status = userStatus;
       }
       return teamUser;
     });
