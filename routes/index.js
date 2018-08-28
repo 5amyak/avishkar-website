@@ -423,13 +423,16 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
   }
 });
 
-//get team requests
+//get received team requests
 router.get("/team-requests", isAuthenticated, async function(req, res, next) {
   try {
     const userId = req.decoded.id;
     const user = await User.findById(userId).lean();
     const dbQuery = {
-      users: { email: user.email, status: "pending" }
+      $and: [
+        { users: { email: user.email, status: "pending" } },
+        { "users.status": { $ne: "refusenik" } }
+      ]
     };
     const teams = await Team.find(dbQuery);
     res.json({
@@ -440,7 +443,7 @@ router.get("/team-requests", isAuthenticated, async function(req, res, next) {
     next(err);
   }
 });
-//pending-request
+//get pending-requests that are sent
 router.get("/pending-request", isAuthenticated, async function(req, res, next) {
   try {
     const userId = req.decoded.id;
@@ -448,7 +451,8 @@ router.get("/pending-request", isAuthenticated, async function(req, res, next) {
     const dbQuery = {
       $and: [
         { users: { email: user.email, status: "leader" } },
-        { "users.status": "pending" }
+        { "users.status": "pending" },
+        { "users.status": { $ne: "refusenik" } }
       ]
     };
     const pendingTeams = await Team.find(dbQuery);
@@ -460,16 +464,24 @@ router.get("/pending-request", isAuthenticated, async function(req, res, next) {
     next(err);
   }
 });
-//accept team request
-router.post("/accept-request", isAuthenticated, async function(req, res, next) {
+//accept or reject team request
+router.post("/respond-to-request", isAuthenticated, async function(
+  req,
+  res,
+  next
+) {
   try {
-    const { teamId } = req.body;
+    const { teamId, action } = req.body;
+    let userStatus;
+    if (action === "accept") userStatus = "member";
+    else if (action === "reject") userStatus = "refusenik";
+    else return res.sendStatus(400);
     const userId = req.decoded.id;
     const user = await User.findById(userId).lean();
     const team = await Team.findById(teamId);
     const users = team.users.filter(function(teamUser) {
       if (teamUser.email == user.email && teamUser.status == "pending") {
-        teamUser.status = "member";
+        teamUser.status = userStatus;
       }
       return teamUser;
     });
@@ -494,7 +506,7 @@ router.get("/teams", isAuthenticated, async function(req, res, next) {
     // users: { email: user.email, status: { $ne: "pending" } }
     $and: [
       { "users.email": user.email },
-      { "users.status": { $ne: "pending" } }
+      { "users.status": { $nin: ["pending", "refusenik"] } }
     ]
   };
   const teams = await Team.find(dbQuery);
