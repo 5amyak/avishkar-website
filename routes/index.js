@@ -288,7 +288,7 @@ router.post("/check-user-availability", async (req, res, next) => {
     //check if email exists and user is registered
     const dbuser = await User.findOne({ email }).lean();
     if (!dbuser)
-      return res.status(400).send({ success: false, message: "Invalid Email" });
+      return res.json({ success: false, message: "User doesn't exist " });
     const isRegistered = dbuser.registeredEvents.some(function(event) {
       return event.name === eventName;
     });
