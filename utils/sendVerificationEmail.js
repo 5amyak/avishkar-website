@@ -25,11 +25,11 @@ function mailgunSendAsync(data) {
     });
   });
 }
-async function sendEmail({ email, name, verifyToken }) {
-  const verifyLink = `${baseUrl}/api/verify-email/${verifyToken}`;
+async function sendEmail({ email, name, verifyToken, origin }) {
+  const redirectUrl = `${origin}/auth`;
+  const verifyLink = `${baseUrl}/api/verify-email/${verifyToken}?redirectUrl=${redirectUrl}`;
   const fileString = await readFileAsync("./views/verify-email.ejs", "utf-8");
   const html = ejs.render(fileString, { name, verifyLink });
-
   const data = {
     from: "Avishkar MNNIT <avishkar2017.mnnit@gmail.com>",
     to: email,
