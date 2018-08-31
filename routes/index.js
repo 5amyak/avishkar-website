@@ -34,11 +34,8 @@ router.post("/update-profile", isAuthenticated, async function(req, res, next) {
         message: "You had already updated the profile!"
       });
     }
-    user.name = profile.name;
-    user.gender = profile.gender;
-    user.city = profile.city;
-    user.college = profile.college;
-    user.updatedProfile = true;
+    profile.updatedProfile = true;
+    user.set(profile);
     const savedUser = await user.save();
     res.json({
       success: true,
@@ -266,74 +263,92 @@ router.get("/size/:eventName", async function(req, res, next) {
 });
 //get teams/events of user(created,invited and invite sent)
 router.get("/get-all-teams", isAuthenticated, async function(req, res, next) {
-  const userId = req.decoded.id;
-  const user = await User.findById(userId)
-    .select("email")
-    .lean();
-  const dbQuery = {
-    "users.email": user.email
-  };
-  const teams = await Team.find(dbQuery)
-    .select("event")
-    .lean();
-  res.json({
-    success: true,
-    teams
-  });
-});
-//check user availability for a team
-router.post("/check-user-availability", async (req, res, next) => {
   try {
-    const { email, eventName } = req.body;
-    //check if email exists and user is registered
-    const dbuser = await User.findOne({ email }).lean();
-    if (!dbuser)
-      return res.status(400).send({ success: false, message: "Invalid Email" });
-    const isRegistered = dbuser.registeredEvents.some(function(event) {
-      return event.name === eventName;
-    });
-    if (!isRegistered) {
-      return res.json({
-        success: false,
-        message: `${dbuser.name} hasn't yet registered for ${eventName}`
-      });
-    }
-
-    //check if the users already have a team or invited
+    const userId = req.decoded.id;
+    const user = await User.findById(userId)
+      .select("email")
+      .lean();
     const dbQuery = {
-      $and: [{ event: eventName }, { "users.email": email }]
+      "users.email": user.email
     };
-    const team = await Team.find(dbQuery).lean();
-    if (team.length === 0) {
-      //checks passed
-      return res.json({
-        success: true,
-        message: "User available"
-      });
-    }
-    const [user] = team[0].users.filter(function(user) {
-      return user.email == email;
-    });
-    if (user.status == "pending") {
-      return res.json({
-        success: false,
-        message: "Someone already sent them a request!"
-      });
-    } else if (user.status == "member") {
-      return res.json({
-        success: false,
-        message: "This user already has a team for ${eventName}!"
-      });
-    }
-    //checks passed
+    const teams = await Team.find(dbQuery)
+      .select({ event: 1, status: 1 })
+      .lean();
     res.json({
       success: true,
-      message: "User available"
+      teams
     });
   } catch (err) {
     next(err);
   }
 });
+//check user availability for a team
+router.post(
+  "/check-user-availability",
+  isAuthenticated,
+  async (req, res, next) => {
+    try {
+      const { email, eventName } = req.body;
+      const userId = req.decoded.id;
+      const authUser = await User.findById(userId).lean();
+      if (authUser.email === email) {
+        return res.json({
+          success: false,
+          message: "You are already part and cannot be added again!"
+        });
+      }
+      //check if email exists and user is registered
+      const dbuser = await User.findOne({ email }).lean();
+      if (!dbuser)
+        return res
+          .status(400)
+          .send({ success: false, message: "Invalid Email" });
+      const isRegistered = dbuser.registeredEvents.some(function(event) {
+        return event.name === eventName;
+      });
+      if (!isRegistered) {
+        return res.json({
+          success: false,
+          message: `${dbuser.name} hasn't yet registered for ${eventName}`
+        });
+      }
+
+      //check if the users already have a team or invited
+      const dbQuery = {
+        $and: [{ event: eventName }, { "users.email": email }]
+      };
+      const team = await Team.find(dbQuery).lean();
+      if (team.length === 0) {
+        //checks passed
+        return res.json({
+          success: true,
+          message: "User available"
+        });
+      }
+      const [user] = team[0].users.filter(function(user) {
+        return user.email == email;
+      });
+      if (user.status == "pending") {
+        return res.json({
+          success: false,
+          message: "Someone already sent them a request!"
+        });
+      } else if (user.status == "member") {
+        return res.json({
+          success: false,
+          message: "This user already has a team for ${eventName}!"
+        });
+      }
+      //checks passed
+      res.json({
+        success: true,
+        message: "User available"
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 //create team
 router.post("/create-team", isAuthenticated, async function(req, res, next) {
   try {
@@ -371,14 +386,18 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
         });
       }
     }
-
-    //check if the users already have a team or invited
+    const userRefs = [userId]; //store userids
+    //check if the users already have a team or invited and store refs
     for (let i = 0; i < invitedEmails.length; i++) {
       const dbQuery = {
         $and: [{ event: eventName }, { "users.email": invitedEmails[i] }]
       };
       const team = await Team.find(dbQuery).lean();
       if (team.length === 0) {
+        const currentUser = await User.findOne({
+          email: invitedEmails[i]
+        }).lean();
+        userRefs.push(currentUser._id); //ok save
         continue;
       }
       const [user] = team[0].users.filter(function(user) {
@@ -408,11 +427,18 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
         status: "pending"
       };
     });
-    const team = new Team({
+    const teamData = {
       name: teamName,
       users: [...sender, ...receivers],
-      event: eventName
-    });
+      event: eventName,
+      userRefs
+    };
+    let teamStatus = "pending";
+    if (teamData.users.length === 1) {
+      teamStatus = "created";
+    }
+    teamData.status = teamStatus;
+    const team = new Team(teamData);
     const savedTeam = await team.save();
     res.json({
       success: true,
@@ -423,12 +449,13 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
   }
 });
 
-//get team requests
+//get received team requests
 router.get("/team-requests", isAuthenticated, async function(req, res, next) {
   try {
     const userId = req.decoded.id;
     const user = await User.findById(userId).lean();
     const dbQuery = {
+      status: "pending",
       users: { email: user.email, status: "pending" }
     };
     const teams = await Team.find(dbQuery);
@@ -440,15 +467,46 @@ router.get("/team-requests", isAuthenticated, async function(req, res, next) {
     next(err);
   }
 });
-//pending-request
+//get pending teams which are to be accepted by others
 router.get("/pending-request", isAuthenticated, async function(req, res, next) {
   try {
     const userId = req.decoded.id;
     const user = await User.findById(userId).lean();
     const dbQuery = {
+      status: "pending",
+      users: { email: user.email, status: "leader" }
+    };
+    console.log({ dbQuery });
+    // const dbQuery = {
+    //   $and: [
+    //     { users: { email: user.email, $or: [{ status: "leader" }] } },
+    //     { "users.status": "pending" },
+    //     { "users.status": { $ne: "refusenik" } }
+    //   ]
+    // };
+    const pendingTeams = await Team.find(dbQuery);
+    res.json({
+      success: true,
+      pendingTeams
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+//get pending-requests that are accepted //TODO:"May have to remove"
+router.get("/accepted-pending-request", isAuthenticated, async function(
+  req,
+  res,
+  next
+) {
+  try {
+    const userId = req.decoded.id;
+    const user = await User.findById(userId).lean();
+    const dbQuery = {
       $and: [
-        { users: { email: user.email, status: "leader" } },
-        { "users.status": "pending" }
+        { users: { email: user.email, status: "member" } },
+        { "users.status": "pending" },
+        { "users.status": { $ne: "refusenik" } }
       ]
     };
     const pendingTeams = await Team.find(dbQuery);
@@ -468,19 +526,31 @@ router.post("/respond-to-request", isAuthenticated, async function(
 ) {
   try {
     const { teamId, action } = req.body;
-    let userStatus;
+    let userStatus, teamStatus;
     if (action === "accept") userStatus = "member";
-    else if (action === "reject") userStatus = "refusenik";
-    else return res.sendStatus(400);
+    else if (action === "reject") {
+      userStatus = "rejected";
+      teamStatus = "rejected";
+    } else return res.sendStatus(400);
     const userId = req.decoded.id;
     const user = await User.findById(userId).lean();
-    const team = await Team.findById(teamId);
+    const team = await Team.findOne({ _id: teamId, status: "pending" });
+    if (!team) return res.sendStatus(400);
+    let pendingUsersCount = 0;
     const users = team.users.filter(function(teamUser) {
-      if (teamUser.email == user.email && teamUser.status == "pending") {
-        teamUser.status = userStatus;
+      if (teamUser.status === "pending") {
+        pendingUsersCount++;
+        if (teamUser.email === user.email) {
+          teamUser.status = userStatus;
+          pendingUsersCount--;
+        }
       }
       return teamUser;
     });
+    if (teamStatus !== "rejected" && pendingUsersCount === 0) {
+      teamStatus = "created";
+    }
+    team.status = teamStatus;
     team.users = users;
     team.markModified("users");
     const savedTeam = await team.save();
@@ -498,12 +568,15 @@ router.get("/teams", isAuthenticated, async function(req, res, next) {
   const userId = req.decoded.id;
   const user = await User.findById(userId);
   // send those that match email & status not equal to pending
+  // const dbQuery = {
+  //   $and: [
+  //     { "users.email": user.email },
+  //     { "users.status": { $nin: ["pending", "refusenik"] } }
+  //   ]
+  // };
   const dbQuery = {
-    // users: { email: user.email, status: { $ne: "pending" } }
-    $and: [
-      { "users.email": user.email },
-      { "users.status": { $ne: "pending" } }
-    ]
+    status: "created",
+    "users.email": user.email
   };
   const teams = await Team.find(dbQuery);
   res.json({
@@ -521,5 +594,26 @@ router.post("/store", async function(req, res) {
     .catch(err => {
       res.send(err);
     });
+});
+
+// all-teams of a user
+router.get("/all-user-teams", isAuthenticated, async function(req, res, next) {
+  try {
+    const userId = req.decoded.id;
+    const user = await User.findById(userId).lean();
+    const aggregate = Team.aggregate();
+    const teams = await aggregate
+      .match({ "users.email": user.email })
+      .project({ userRefs: 0 })
+      .group({ _id: "$status", teams: { $push: "$$ROOT" } });
+    //const teams = await Team.find({ "users.email": user.email });
+    res.json({
+      success: true,
+      requestBy: user.email,
+      teams
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 module.exports = router;
