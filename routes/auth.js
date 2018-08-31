@@ -78,7 +78,8 @@ router.get("/glogin", async function(req, res, next) {
             name,
             email,
             gender,
-            picture
+            picture,
+            emailVerified: true
           });
           const savedUser = await user.save();
           userId = savedUser._id;
@@ -175,7 +176,7 @@ router.get("/fblogin", async function(req, res, next) {
 //signup
 router.post("/signup", async function(req, res, next) {
   try {
-    const { name, password, email, college } = req.body;
+    const { name, password, email } = req.body;
     const user = await User.findOne({ email })
       .select("email")
       .lean();
@@ -192,19 +193,17 @@ router.post("/signup", async function(req, res, next) {
     const userData = {
       name,
       email,
-      phone,
-      college,
       password: pwdHash,
       verifyToken: uniqid()
     };
 
     const newUser = new User(userData);
     const savedUser = await newUser.save();
-    const mailgunResponse = await sendVerificationEmail({
-      email,
-      name,
-      verifyToken
-    });
+    // const mailgunResponse = await sendVerificationEmail({
+    //   email,
+    //   name,
+    //   verifyToken
+    // });
     //login the user now
     const token = jwt.sign({ id: savedUser._id }, jwtSecret);
     res.cookie("user", token, {

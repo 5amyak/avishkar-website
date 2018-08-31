@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const routes = require("./routes");
+const collegeRoutes = require("./routes/colleges");
 const authRoutes = require("./routes/auth");
 const errorHandler = require("./utils/error-handler");
 const allowedOrigins = [
@@ -38,8 +39,9 @@ app.use("/api", function(req, res, next) {
 app.use("/api", cookieParser());
 app.use("/api", bodyParser.urlencoded({ extended: false }));
 app.use("/api", bodyParser.json());
-app.use("/api", routes);
 app.use("/api", authRoutes);
+app.use("/api", collegeRoutes);
+app.use("/api", routes);
 app.use(errorHandler);
 app.use("*", function(req, res) {
   res.sendStatus(404);
