@@ -266,13 +266,13 @@ router.get("/get-all-teams", isAuthenticated, async function(req, res, next) {
   try {
     const userId = req.decoded.id;
     const user = await User.findById(userId)
-      .select({ email: 1, status: 1 })
+      .select("email")
       .lean();
     const dbQuery = {
       "users.email": user.email
     };
     const teams = await Team.find(dbQuery)
-      .select("event")
+      .select({ event: 1, status: 1 })
       .lean();
     res.json({
       success: true,
@@ -504,7 +504,7 @@ router.get("/accepted-pending-request", isAuthenticated, async function(
     const user = await User.findById(userId).lean();
     const dbQuery = {
       $and: [
-        { users: { email: user.email, status: "memeber" } },
+        { users: { email: user.email, status: "member" } },
         { "users.status": "pending" },
         { "users.status": { $ne: "refusenik" } }
       ]
@@ -600,7 +600,7 @@ router.post("/store", async function(req, res) {
 router.get("/all-user-teams", isAuthenticated, async function(req, res, next) {
   try {
     const userId = req.decoded.id;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean();
     const aggregate = Team.aggregate();
     const teams = await aggregate
       .match({ "users.email": user.email })
@@ -609,6 +609,7 @@ router.get("/all-user-teams", isAuthenticated, async function(req, res, next) {
     //const teams = await Team.find({ "users.email": user.email });
     res.json({
       success: true,
+      requestBy: user.email,
       teams
     });
   } catch (err) {

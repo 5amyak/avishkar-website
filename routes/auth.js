@@ -19,7 +19,7 @@ const isAuthenticated = require("../utils/is-authenticated");
 const queryString = require("querystring");
 const router = express.Router();
 const saltRounds = 10;
-const jwtSecret = "secret";
+const jwtSecret = "secret2";
 const randBytesAsync = util.promisify(crypto.randomBytes);
 const scopes = [
   "https://www.googleapis.com/auth/userinfo.email",
@@ -78,8 +78,7 @@ router.get("/glogin", async function(req, res, next) {
             name,
             email,
             gender,
-            picture,
-            emailVerified: true
+            picture
           });
           const savedUser = await user.save();
           userId = savedUser._id;
@@ -189,31 +188,34 @@ router.post("/signup", async function(req, res, next) {
     }
     const pwdHash = await bcrypt.hash(password, saltRounds);
     // const randBuffer = await randBytesAsync(20);
-    // const verifyToken = randBuffer.toString("hex");
+    const verifyToken = uniqid();
     const userData = {
       name,
       email,
       password: pwdHash,
-      verifyToken: uniqid()
+      verifyToken
     };
 
     const newUser = new User(userData);
     const savedUser = await newUser.save();
-    // const mailgunResponse = await sendVerificationEmail({
-    //   email,
-    //   name,
-    //   verifyToken
-    // });
-    //login the user now
-    const token = jwt.sign({ id: savedUser._id }, jwtSecret);
-    res.cookie("user", token, {
-      httpOnly: true,
-      maxAge: 86400 * 7 * 1000,
-      domain: getCookieDomain(req.header("origin"))
+    const mailgunResponse = await sendVerificationEmail({
+      email,
+      name,
+      verifyToken,
+      origin: req.header("origin")
     });
+    //TODO
+
+    //dont login the user until verified
+    // const token = jwt.sign({ id: savedUser._id }, jwtSecret);
+    // res.cookie("user", token, {
+    //   httpOnly: true,
+    //   maxAge: 86400 * 7 * 1000,
+    //   domain: getCookieDomain(req.header("origin"))
+    // });
     res.json({
       success: true,
-      message: `verfication link sent to ${savedUser.email}`
+      message: `Verfication link sent to ${savedUser.email}`
     });
   } catch (err) {
     next(err);
@@ -246,6 +248,19 @@ router.post("/signin", async function(req, res, next) {
     const { email, password } = req.body;
     const user = await User.findOne({ email }).lean();
     if (!user) return res.json({ message: "Incorrect details" });
+    if (!user.emailVerified) {
+      const { name, verifyToken } = user;
+      const mailgunResponse = await sendVerificationEmail({
+        email,
+        name,
+        verifyToken,
+        origin: req.headers("origin")
+      });
+      return res.json({
+        success: false,
+        message: `Verification link sent to ${email}`
+      });
+    }
     if (!user.password) {
       //happens if signedup with google or fb
       return res.json({
@@ -270,6 +285,7 @@ router.post("/signin", async function(req, res, next) {
 //verify email
 router.get("/verify-email/:verifyToken", async function(req, res) {
   const { verifyToken } = req.params;
+  const { redirectUrl } = req.query;
   const user = await User.findOne({ verifyToken });
   if (user) {
     if (user.emailVerified === true) {
@@ -281,12 +297,24 @@ router.get("/verify-email/:verifyToken", async function(req, res) {
     user.set({ emailVerified: true });
     const savedUser = await user.save();
     //login the user now
-    const token = jwt.sign({ id: user._id }, jwtSecret);
-    res.cookie("user", token, {
-      httpOnly: true,
-      maxAge: 86400 * 7 * 1000,
-      domain: getCookieDomain(req.header("origin"))
-    });
+    // const token = jwt.sign({ id: user._id }, jwtSecret);
+    // res.cookie("user", token, {
+    //   httpOnly: true,
+    //   maxAge: 86400 * 7 * 1000,
+    //   domain: getCookieDomain(redirectUrl)
+    // });
+    res.setHeader("Content-Type", "text/html");
+    res.send(
+      `<!DOCTYPE html>
+          <html>
+          <body>
+          <p>Verified sucessfully!..Redirecting to <a href=${redirectUrl}>login page</a></p>
+          <script>
+           setTimeout(function(){
+             window.location.replace(${redirectUrl});
+           },1000)         
+          </script></body></html>`
+    );
   } else {
     res.json({
       success: false,
@@ -356,7 +384,10 @@ router.get("/check-state", async function(req, res, next) {
     if (!token) return res.json({ success: false });
 
     jwt.verify(token, jwtSecret, function(err) {
-      if (err) return res.json({ success: false });
+      if (err) {
+        res.clearCookie("user");
+        return res.json({ success: false });
+      }
       res.json({ success: true });
     });
   } catch (err) {
