@@ -246,19 +246,25 @@ router.post("/is-user-verified", async function(req, res, next) {
 router.post("/signin", async function(req, res, next) {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).lean();
+    const user = await User.findOne({ email });
     if (!user) return res.json({ message: "Incorrect details" });
     if (!user.emailVerified) {
-      const { name, verifyToken } = user;
+      const { name } = user;
+      let verifyToken = user.verifyToken;
+      if (!verifyToken) {
+        verifyToken = uniqid();
+        user.verifyToken = verifyToken;
+        await user.save();
+      }
       const mailgunResponse = await sendVerificationEmail({
         email,
         name,
         verifyToken,
-        origin: req.headers("origin")
+        origin: req.header("origin")
       });
       return res.json({
         success: false,
-        message: `Verification link sent to ${email}`
+        message: `Please check your inbox & verify now`
       });
     }
     if (!user.password) {

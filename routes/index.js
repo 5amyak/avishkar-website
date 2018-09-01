@@ -533,8 +533,9 @@ router.post("/respond-to-request", isAuthenticated, async function(
   try {
     const { teamId, action } = req.body;
     let userStatus, teamStatus;
-    if (action === "accept") userStatus = "member";
-    else if (action === "reject") {
+    if (action === "accept") {
+      userStatus = "member";
+    } else if (action === "reject") {
       userStatus = "rejected";
       teamStatus = "rejected";
     } else return res.sendStatus(400);
@@ -555,6 +556,8 @@ router.post("/respond-to-request", isAuthenticated, async function(
     });
     if (teamStatus !== "rejected" && pendingUsersCount === 0) {
       teamStatus = "created";
+    } else if (teamStatus !== "rejected" && pendingUsersCount > 0) {
+      teamStatus = "pending";
     }
     team.status = teamStatus;
     team.users = users;
