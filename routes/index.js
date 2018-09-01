@@ -152,8 +152,14 @@ router.post("/fetch-event-info", isAuthenticated, async function(
 router.post("/register-event", isAuthenticated, async function(req, res, next) {
   try {
     const userId = req.decoded.id;
-    const projection = { registeredEvents: 1 };
+    const projection = { registeredEvents: 1, updatedProfile: 1 };
     const user = await User.findById(userId).select(projection);
+    if (user.updatedProfile === false) {
+      return res.json({
+        success: false,
+        message: "Update your profile first!"
+      });
+    }
     const maxEventsToRegister = 5;
     if (user.registeredEvents.length >= maxEventsToRegister) {
       return res.json({
