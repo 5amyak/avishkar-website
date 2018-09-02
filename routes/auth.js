@@ -277,12 +277,8 @@ router.post("/signin", async function(req, res, next) {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Incorrect details" });
     //login the user now
-    const token = jwt.sign({ id: user._id }, jwtSecret);
-    res.cookie("user", token, {
-      httpOnly: true,
-      maxAge: 86400 * 7 * 1000,
-      domain: getCookieDomain(req.header("origin"))
-    });
+    const userId = user._id;
+    setJwtCookie(req, res, userId);
     res.json({ token, success: true, message: "login successful" });
   } catch (err) {
     next(err);
@@ -391,7 +387,10 @@ router.get("/check-state", async function(req, res, next) {
 
     jwt.verify(token, jwtSecret, function(err) {
       if (err) {
-        res.cookie("user","",{httpOnly:true,domain:getCookieDomain(req.header("origin"))});
+        res.cookie("user", "", {
+          httpOnly: true,
+          domain: getCookieDomain(req.header("origin"))
+        });
         return res.json({ success: false });
       }
       res.json({ success: true });
@@ -402,7 +401,10 @@ router.get("/check-state", async function(req, res, next) {
 });
 //logout
 router.get("/logout", async function(req, res) {
-  res.cookie("user","",{httpOnly:true,domain:getCookieDomain(req.header("origin"))});
+  res.cookie("user", "", {
+    httpOnly: true,
+    domain: getCookieDomain(req.header("origin"))
+  });
   res.end();
 });
 module.exports = router;
