@@ -279,7 +279,7 @@ router.post("/signin", async function(req, res, next) {
     //login the user now
     const userId = user._id;
     setJwtCookie(req, res, userId);
-    res.json({ token, success: true, message: "login successful" });
+    res.json({ success: true, message: "login successful" });
   } catch (err) {
     next(err);
   }
