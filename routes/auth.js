@@ -391,7 +391,7 @@ router.get("/check-state", async function(req, res, next) {
 
     jwt.verify(token, jwtSecret, function(err) {
       if (err) {
-        res.clearCookie("user");
+        res.cookie("user","",{httpOnly:true,domain:getCookieDomain(req.header("origin"))});
         return res.json({ success: false });
       }
       res.json({ success: true });
@@ -402,7 +402,7 @@ router.get("/check-state", async function(req, res, next) {
 });
 //logout
 router.get("/logout", async function(req, res) {
-  res.clearCookie("user");
-  res.redirect("/");
+  res.cookie("user","",{httpOnly:true,domain:getCookieDomain(req.header("origin"))});
+  res.end();
 });
 module.exports = router;
