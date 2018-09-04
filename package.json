@@ -6,7 +6,8 @@
   "scripts": {
     "test": "mocha test/index.js",
     "dev": "cross-env NODE_ENV=dev nodemon server.js",
-    "start": "npm start"
+    "start": "npm start",
+    "debug":"cross-env NODE_ENV=dev node --inspect server.js"
   },
   "author": "",
   "license": "ISC",
@@ -19,7 +20,8 @@
     "dotenv": "^6.0.0",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
-    "googleapis": "^33.0.0",
+    "google-auth-library": "^1.6.1",
+    "googleapis": "^26.0.1",
     "jsonwebtoken": "^8.3.0",
     "mailgun-js": "^0.20.0",
     "mongoose": "^5.2.6",
