@@ -7,7 +7,7 @@
     "test": "mocha test/index.js",
     "dev": "cross-env NODE_ENV=dev nodemon server.js",
     "start": "npm start",
-    "debug":"cross-env NODE_ENV=dev node --inspect server.js"
+    "debug": "cross-env NODE_ENV=dev node --inspect server.js"
   },
   "author": "",
   "license": "ISC",
