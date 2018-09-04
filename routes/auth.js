@@ -85,7 +85,7 @@ router.get("/glogin", async function(req, res, next) {
         } else {
           userId = isUser._id;
         }
-        setJwtCookie(req, res, userId);
+        setJwtCookie(req, res, { cookieKey: "user", id: userId });
         res.setHeader("Content-Type", "text/html");
         res.send(
           `<!DOCTYPE html><html><body><script>
@@ -153,7 +153,7 @@ router.get("/fblogin", async function(req, res, next) {
         } else {
           userId = isUser._id;
         }
-        setJwtCookie(req, res, userId);
+        setJwtCookie(req, res, { cookieKey: "user", id: userId });
         res.setHeader("Content-Type", "text/html");
         res.send(
           `<!DOCTYPE html><html><body><script>

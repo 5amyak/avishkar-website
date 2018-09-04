@@ -161,7 +161,7 @@ router.post("/register-event", isAuthenticated, async function(req, res, next) {
         message: "Update your profile first!"
       });
     }
-    const maxEventsToRegister = 5;
+    const maxEventsToRegister = 15;
     if (user.registeredEvents.length >= maxEventsToRegister) {
       return res.json({
         success: false,
