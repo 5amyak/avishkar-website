@@ -15,7 +15,8 @@ router.get("/profile", isAuthenticated, async function(req, res, next) {
       gender: 1,
       city: 1,
       college: 1,
-      updatedProfile: 1
+      updatedProfile: 1,
+      picture: 1
     };
     const user = await User.findOne({ _id: userid }, projection);
     res.json({ profile: user });
@@ -308,7 +309,7 @@ router.post(
       if (!dbuser)
         return res
           .status(400)
-          .send({ success: false, message: "Invalid Email" });
+          .send({ success: false, message: "User doesn't exist!" });
       const isRegistered = dbuser.registeredEvents.some(function(event) {
         return event.name === eventName;
       });
