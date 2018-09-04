@@ -246,10 +246,16 @@ router.post("/is-user-verified", async function(req, res, next) {
 router.post("/signin", async function(req, res, next) {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).lean();
+    const user = await User.findOne({ email });
     if (!user) return res.json({ message: "Incorrect details" });
     if (!user.emailVerified) {
-      const { name, verifyToken } = user;
+      const { name } = user;
+      let verifyToken = user.verifyToken;
+      if (!verifyToken) {
+        verifyToken = uniqid();
+        user.verifyToken = verifyToken;
+        await user.save();
+      }
       const mailgunResponse = await sendVerificationEmail({
         email,
         name,
@@ -258,7 +264,7 @@ router.post("/signin", async function(req, res, next) {
       });
       return res.json({
         success: false,
-        message: `Verification link sent to ${email}`
+        message: `Please check your inbox & verify now`
       });
     }
     if (!user.password) {
@@ -385,7 +391,7 @@ router.get("/check-state", async function(req, res, next) {
 
     jwt.verify(token, jwtSecret, function(err) {
       if (err) {
-        res.clearCookie("user");
+        res.cookie("user","",{httpOnly:true,domain:getCookieDomain(req.header("origin"))});
         return res.json({ success: false });
       }
       res.json({ success: true });
@@ -396,7 +402,7 @@ router.get("/check-state", async function(req, res, next) {
 });
 //logout
 router.get("/logout", async function(req, res) {
-  res.clearCookie("user");
-  res.redirect("/");
+  res.cookie("user","",{httpOnly:true,domain:getCookieDomain(req.header("origin"))});
+  res.end();
 });
 module.exports = router;

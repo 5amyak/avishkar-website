@@ -152,8 +152,14 @@ router.post("/fetch-event-info", isAuthenticated, async function(
 router.post("/register-event", isAuthenticated, async function(req, res, next) {
   try {
     const userId = req.decoded.id;
-    const projection = { registeredEvents: 1 };
+    const projection = { registeredEvents: 1, updatedProfile: 1 };
     const user = await User.findById(userId).select(projection);
+    if (user.updatedProfile === false) {
+      return res.json({
+        success: false,
+        message: "Update your profile first!"
+      });
+    }
     const maxEventsToRegister = 5;
     if (user.registeredEvents.length >= maxEventsToRegister) {
       return res.json({
@@ -527,8 +533,9 @@ router.post("/respond-to-request", isAuthenticated, async function(
   try {
     const { teamId, action } = req.body;
     let userStatus, teamStatus;
-    if (action === "accept") userStatus = "member";
-    else if (action === "reject") {
+    if (action === "accept") {
+      userStatus = "member";
+    } else if (action === "reject") {
       userStatus = "rejected";
       teamStatus = "rejected";
     } else return res.sendStatus(400);
@@ -549,6 +556,8 @@ router.post("/respond-to-request", isAuthenticated, async function(
     });
     if (teamStatus !== "rejected" && pendingUsersCount === 0) {
       teamStatus = "created";
+    } else if (teamStatus !== "rejected" && pendingUsersCount > 0) {
+      teamStatus = "pending";
     }
     team.status = teamStatus;
     team.users = users;
