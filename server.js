@@ -4,6 +4,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
+const helmet = require("helmet");
 const routes = require("./routes");
 const collegeRoutes = require("./routes/colleges");
 const authRoutes = require("./routes/auth");
@@ -18,6 +19,7 @@ mongoose.connect(
   { useNewUrlParser: true }
 );
 const app = express();
+app.use(helmet());
 //CORS handler
 app.use("/api", function(req, res, next) {
   if (isProduction) {
