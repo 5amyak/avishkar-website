@@ -20,7 +20,7 @@ const userSchema = mongoose.Schema({
   updatedProfile: { type: Boolean, default: false },
   paymentDone: { type: Boolean, default: false },
   emailVerified: { type: Boolean, default: false },
-  verifyToken: { type: String, unique: true },
+  verifyToken: { type: String },
   resetToken: { type: String },
   resetTokenExpiry: { type: Date }
 });
