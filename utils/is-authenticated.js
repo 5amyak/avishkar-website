@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const secret = "secret2";
+const secret = "secret3";
 module.exports = function isAuthenticated(req, res, next) {
   const token = req.cookies.user;
   if (!token) return res.status(401).json({ message: "Not authenticated" });

@@ -19,7 +19,7 @@ const isAuthenticated = require("../utils/is-authenticated");
 const queryString = require("querystring");
 const router = express.Router();
 const saltRounds = 10;
-const jwtSecret = "secret2";
+const jwtSecret = "secret3";
 const randBytesAsync = util.promisify(crypto.randomBytes);
 const scopes = [
   "https://www.googleapis.com/auth/userinfo.email",

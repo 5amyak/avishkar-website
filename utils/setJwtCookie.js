@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const getCookieDomain = require("./getCookieDomain");
-const jwtSecret = "secret2";
+const jwtSecret = "secret3";
 module.exports = function(req, res, { cookieKey, id }) {
   const token = jwt.sign({ id }, jwtSecret);
   res.cookie(cookieKey, token, {

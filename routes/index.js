@@ -240,24 +240,28 @@ router.get("/registered-events", isAuthenticated, async function(
   }
 });
 
-//check if team name is already taken
+//check if team name is already taken //TODO add to frontend
 router.post("/is-teamname-available", isAuthenticated, async function(
   req,
   res,
   next
 ) {
-  const { teamName, eventName } = req.body;
-  const team = await Team.findOne({ team: teamName, event: eventName });
-  if (!team) {
+  try {
+    const { teamName, eventName } = req.body;
+    const team = await Team.findOne({ name: teamName, event: eventName });
+    if (!team) {
+      return res.json({
+        success: true,
+        message: `${teamName} is available for ${eventName}`
+      });
+    }
     return res.json({
-      success: true,
-      message: `${teamName} is available for ${eventName}`
+      success: false,
+      message: `Someone took this name for ${eventName}`
     });
+  } catch (err) {
+    next(err);
   }
-  return res.json({
-    success: false,
-    message: `Someone took this name for ${eventName}`
-  });
 });
 //get teamsize of event
 router.get("/size/:eventName", async function(req, res, next) {
