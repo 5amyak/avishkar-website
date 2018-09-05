@@ -16,14 +16,11 @@ const userSchema = mongoose.Schema({
   course: { type: String },
   courseYear: { type: String },
   regNum: { type: String },
-  //referralCode: { type: String, unique: true },
-  //referredBy: { code: { type: String }, status: { type: Number, default: 0 } },
   registeredEvents: [eventSchema],
-  //requestsSent: [{ event: { type: String }, to: { type: String } }],
   updatedProfile: { type: Boolean, default: false },
   paymentDone: { type: Boolean, default: false },
   emailVerified: { type: Boolean, default: false },
-  verifyToken: { type: String },
+  verifyToken: { type: String, unique: true },
   resetToken: { type: String },
   resetTokenExpiry: { type: Date }
 });
