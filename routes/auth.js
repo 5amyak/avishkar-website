@@ -291,10 +291,17 @@ router.get("/verify-email/:verifyToken", async function(req, res) {
   const user = await User.findOne({ verifyToken });
   if (user) {
     if (user.emailVerified === true) {
-      return res.status(400).json({
-        success: false,
-        message: "Already verified!"
-      });
+      res.send(
+        `<!DOCTYPE html>
+          <html>
+          <body>
+          <p>Already Verified..Redirecting to <a href="https://avishkarmnnit.in">Home page</a></p>
+          <script>
+           setTimeout(function(){
+             window.location.replace("https://avishkarmnnit.in");
+           },1000)         
+          </script></body></html>`
+      );
     }
     user.set({ emailVerified: true });
     const savedUser = await user.save();
@@ -313,7 +320,7 @@ router.get("/verify-email/:verifyToken", async function(req, res) {
           <p>Verified sucessfully!..Redirecting to <a href=${redirectUrl}>login page</a></p>
           <script>
            setTimeout(function(){
-             window.location.replace(${redirectUrl});
+             window.location.replace("${redirectUrl}");
            },1000)         
           </script></body></html>`
     );
@@ -344,7 +351,7 @@ router.post("/forgot-password", async function(req, res, next) {
     const emailRes = await sendResetEmail({
       email,
       name: user.name,
-      resetToken: user.resetToken
+      resetToken: savedUser.resetToken
     });
     return res.json({
       success: true,
