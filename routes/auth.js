@@ -278,7 +278,7 @@ router.post("/signin", async function(req, res, next) {
     if (!match) return res.status(400).json({ message: "Incorrect details" });
     //login the user now
     const userId = user._id;
-    setJwtCookie(req, res, userId);
+    setJwtCookie(req, res, { cookieKey: "user", id: userId });
     res.json({ success: true, message: "login successful" });
   } catch (err) {
     next(err);
