@@ -437,6 +437,10 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
           message: "User already in a created team or a pending team!"
         });
       }
+      const user = await User.findOne({ email: invitedEmails[i] })
+        .select("email")
+        .lean();
+      userRefs.push(user._id);
     }
     const sender = [
       {
