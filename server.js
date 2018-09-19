@@ -10,7 +10,6 @@ const collegeRoutes = require("./routes/colleges");
 const authRoutes = require("./routes/auth");
 const dataRoutes = require("./routes/data");
 const participantRoutes = require("./routes/participants");
-
 const errorHandler = require("./utils/error-handler");
 const allowedOrigins = [
   "https://www.avishkarmnnit.in",
