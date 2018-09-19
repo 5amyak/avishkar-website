@@ -8,6 +8,7 @@ const helmet = require("helmet");
 const routes = require("./routes");
 const collegeRoutes = require("./routes/colleges");
 const authRoutes = require("./routes/auth");
+const dataRoutes = require("./routes/data");
 const errorHandler = require("./utils/error-handler");
 const allowedOrigins = [
   "https://www.avishkarmnnit.in",
@@ -44,6 +45,7 @@ app.use("/api", bodyParser.json());
 app.use("/api", authRoutes);
 app.use("/api", collegeRoutes);
 app.use("/api", routes);
+app.use("/api", dataRoutes);
 app.use(errorHandler);
 app.use("*", function(req, res) {
   res.sendStatus(404);
