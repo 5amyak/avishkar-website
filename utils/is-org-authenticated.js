@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const secret = "secret3";
-module.exports = function isAuthenticated(req, res, next) {
-  const token = req.cookies.user;
+module.exports = function isOrgAuthenticated(req, res, next) {
+  const token = req.cookies.org;
   if (!token) return res.status(401).json({ message: "Not authenticated" });
 
   jwt.verify(token, secret, function(err, decoded) {

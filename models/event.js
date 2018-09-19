@@ -4,6 +4,8 @@ const eventSchema = mongoose.Schema({
   displayName: { type: String, required: true, unique: true },
   size: { type: Number, required: true },
   category: { type: String, required: true },
+  image: { type: String },
+  problemStatements: { type: Array },
   info: { type: String }
 });
 

@@ -1,13 +1,92 @@
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Verify your email</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <style>
+        @media(max-width:600px) {
+            .content {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
-<body>
-    <p>Hello <%= name %>, click the link below to verify your email</p> 
-    <a href="<%= verifyLink %>"><%= verifyLink %></a>
-    <p>Regards - Avishkar 2018,MNNIT Allahabad - 211004</p>
+
+<body style="margin: 0; padding: 0;font-family: 'Open Sans', sans-serif;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <table class="content" align="center" border="0" cellpadding="0" cellspacing="0" width="600">
+            <tr>
+                <td align="center" bgcolor="white" style="padding: 15px 0 15px 0;">
+
+                    <img src="https://s3.ap-south-1.amazonaws.com/avishkarmnnit/static/logo.jpg" alt="Avishkar title" width=100 height=100 style="display: block;" />
+                    <p style="text-align: center;padding: 0;margin: 0;">AVISHKAR MNNIT</p>
+                </td>
+            </tr>
+            <tr>
+                <td bgcolor="white" style="padding:10px 30px 10px 30px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size:16px;border-collapse:collapse">
+                        <tr>
+                            <td>
+                                Dear
+                                <%= name %>,
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center" style="padding: 10px 0 0 0;">
+                                <a href="<%= verifyLink %>">
+                                    <button style="color: whitesmoke;
+        text-align: center;
+        margin: 0px;
+        font-weight: 400;
+        box-shadow: rgba(108, 174, 221, 0.4) 0px 0px 80px;
+        cursor: pointer;
+        background-color:#6caedd;
+        border-radius: 4px;
+        text-decoration: none;
+        padding: 0.75em 2.5em;
+        border-style: none;
+        font-size: 1.175rem;">Click here to verify email</button>
+                                </a>
+
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td bgcolor="white">
+                    <p style="text-align: center;">Follow us on:</p>
+                    <table align="center">
+                        <tr>
+                            <td align="center">
+                                <a href="https://www.facebook.com/mnnit.avishkar/" target="_blank" title="our Facebook page"><img src="https://4.bp.blogspot.com/-gDXKOlV0GNE/WI2UTLnZUkI/AAAAAAAABtA/r77ovtSRmkc_3o11_PF7YMj79GGcCBT6gCLcB/s1600/facebook.png"
+                                        alt=""></a>
+                            </td>
+
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr bgcolor="white">
+                <td align="center" style="padding: 10px 0 10px 0;">
+                    Please ignore if this email is not related to you!<br> NOTE: In case of any queries please contact
+                    us  at <a href="mailto:avishkar.mnnit.2k18@gmail.com" style="text-decoration:none;color:#6caedd">avishkar.mnnit.2k18@gmail.com</a>
+                </td>
+            </tr>
+            <tr bgcolor="black">
+                <td style="padding: 20px 0 10px 20px;color:white">
+                    Regards<br>Team
+                    <a href="https://www.avishkarmnnit.in" target="_blank" style="text-decoration:none;color:#6caedd"> Avishkar
+                        MNNIT
+                    </a><br> MNNIT Allahabad, 211004, UP, India<br>
+                    <a href="https://www.avishkarmnnit.in" target="_blank " style="text-decoration:none;color:#6caedd ">www.avishkarmnnit.in"</a>
+                </td>
+            </tr>
+        </table>
+    </table>
 </body>
+
 </html>

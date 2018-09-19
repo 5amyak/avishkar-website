@@ -8,6 +8,7 @@
 		"google_details": {
 			"client_id" : "358161711406-84nhpo4a26uh4koio9g44gdpel796i41.apps.googleusercontent.com",
 			"redirect_uri" : "https://api.avishkarmnnit.in/api/glogin",
+			"co_redirect_uri":"https://api.avishkarmnnit.in/api/orgs/glogin",
 			"client_secret": "6wauks5qc6w-JgOw28gLZM_-"
 		}
 	}

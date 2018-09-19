@@ -15,7 +15,8 @@ router.get("/profile", isAuthenticated, async function(req, res, next) {
       gender: 1,
       city: 1,
       college: 1,
-      updatedProfile: 1
+      updatedProfile: 1,
+      picture: 1
     };
     const user = await User.findOne({ _id: userid }, projection);
     res.json({ profile: user });
@@ -160,7 +161,7 @@ router.post("/register-event", isAuthenticated, async function(req, res, next) {
         message: "Update your profile first!"
       });
     }
-    const maxEventsToRegister = 5;
+    const maxEventsToRegister = 15;
     if (user.registeredEvents.length >= maxEventsToRegister) {
       return res.json({
         success: false,
@@ -239,24 +240,28 @@ router.get("/registered-events", isAuthenticated, async function(
   }
 });
 
-//check if team name is already taken
+//check if team name is already taken //TODO add to frontend
 router.post("/is-teamname-available", isAuthenticated, async function(
   req,
   res,
   next
 ) {
-  const { teamName, eventName } = req.body;
-  const team = await Team.findOne({ team: teamName, event: eventName });
-  if (!team) {
+  try {
+    const { teamName, eventName } = req.body;
+    const team = await Team.findOne({ name: teamName, event: eventName });
+    if (!team) {
+      return res.json({
+        success: true,
+        message: `${teamName} is available for ${eventName}`
+      });
+    }
     return res.json({
-      success: true,
-      message: `${teamName} is available for ${eventName}`
+      success: false,
+      message: `Someone took this name for ${eventName}`
     });
+  } catch (err) {
+    next(err);
   }
-  return res.json({
-    success: false,
-    message: `Someone took this name for ${eventName}`
-  });
 });
 //get teamsize of event
 router.get("/size/:eventName", async function(req, res, next) {
@@ -308,7 +313,7 @@ router.post(
       if (!dbuser)
         return res
           .status(400)
-          .send({ success: false, message: "Invalid Email" });
+          .send({ success: false, message: "User doesn't exist!" });
       const isRegistered = dbuser.registeredEvents.some(function(event) {
         return event.name === eventName;
       });
@@ -360,6 +365,19 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
   try {
     const { invitedEmails, eventName, teamName } = req.body;
     //TODO check the team size and eventName
+    const event = await Event.findOne({ name: eventName });
+    if (!event) {
+      return res.json({
+        success: false,
+        message: "This event doesn't exist"
+      });
+    }
+    if (invitedEmails.length >= event.size) {
+      return res.json({
+        success: "false",
+        message: "Your team has more people than the limit!"
+      });
+    }
     const userId = req.decoded.id;
 
     //check if the user is registered for the event
@@ -374,6 +392,18 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
       });
     }
     //check if the user is already in a team
+    const checkUserTeamQuery = {
+      event: eventName,
+      status: { $ne: "rejected" },
+      "users.email": user.email
+    };
+    const userTeam = await Team.findOne(checkUserTeamQuery);
+    if (userTeam) {
+      return res.json({
+        success: false,
+        message: "User already in a created team or a pending team!"
+      });
+    }
 
     //check if emails are valid and they are registered
     for (let i = 0; i < invitedEmails.length; i++) {
@@ -395,31 +425,22 @@ router.post("/create-team", isAuthenticated, async function(req, res, next) {
     const userRefs = [userId]; //store userids
     //check if the users already have a team or invited and store refs
     for (let i = 0; i < invitedEmails.length; i++) {
-      const dbQuery = {
-        $and: [{ event: eventName }, { "users.email": invitedEmails[i] }]
+      const checkUserTeamQuery = {
+        event: eventName,
+        status: { $ne: "rejected" },
+        "users.email": invitedEmails[i]
       };
-      const team = await Team.find(dbQuery).lean();
-      if (team.length === 0) {
-        const currentUser = await User.findOne({
-          email: invitedEmails[i]
-        }).lean();
-        userRefs.push(currentUser._id); //ok save
-        continue;
-      }
-      const [user] = team[0].users.filter(function(user) {
-        return user.email == invitedEmails[i];
-      });
-      if (user.status == "pending") {
+      const userTeam = await Team.findOne(checkUserTeamQuery);
+      if (userTeam) {
         return res.json({
           success: false,
-          message: "Someone already sent them a request!"
-        });
-      } else if (user.status == "member") {
-        return res.json({
-          success: false,
-          message: "This user already has a team!"
+          message: "User already in a created team or a pending team!"
         });
       }
+      const user = await User.findOne({ email: invitedEmails[i] })
+        .select("email")
+        .lean();
+      userRefs.push(user._id);
     }
     const sender = [
       {

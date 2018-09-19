@@ -19,7 +19,7 @@ const isAuthenticated = require("../utils/is-authenticated");
 const queryString = require("querystring");
 const router = express.Router();
 const saltRounds = 10;
-const jwtSecret = "secret2";
+const jwtSecret = "secret3";
 const randBytesAsync = util.promisify(crypto.randomBytes);
 const scopes = [
   "https://www.googleapis.com/auth/userinfo.email",
@@ -85,7 +85,7 @@ router.get("/glogin", async function(req, res, next) {
         } else {
           userId = isUser._id;
         }
-        setJwtCookie(req, res, userId);
+        setJwtCookie(req, res, { cookieKey: "user", id: userId });
         res.setHeader("Content-Type", "text/html");
         res.send(
           `<!DOCTYPE html><html><body><script>
@@ -153,7 +153,7 @@ router.get("/fblogin", async function(req, res, next) {
         } else {
           userId = isUser._id;
         }
-        setJwtCookie(req, res, userId);
+        setJwtCookie(req, res, { cookieKey: "user", id: userId });
         res.setHeader("Content-Type", "text/html");
         res.send(
           `<!DOCTYPE html><html><body><script>
@@ -278,7 +278,7 @@ router.post("/signin", async function(req, res, next) {
     if (!match) return res.status(400).json({ message: "Incorrect details" });
     //login the user now
     const userId = user._id;
-    setJwtCookie(req, res, userId);
+    setJwtCookie(req, res, { cookieKey: "user", id: userId });
     res.json({ success: true, message: "login successful" });
   } catch (err) {
     next(err);
@@ -291,10 +291,17 @@ router.get("/verify-email/:verifyToken", async function(req, res) {
   const user = await User.findOne({ verifyToken });
   if (user) {
     if (user.emailVerified === true) {
-      return res.status(400).json({
-        success: false,
-        message: "Already verified!"
-      });
+      res.send(
+        `<!DOCTYPE html>
+          <html>
+          <body>
+          <p>Already Verified..Redirecting to <a href="https://avishkarmnnit.in">Home page</a></p>
+          <script>
+           setTimeout(function(){
+             window.location.replace("https://avishkarmnnit.in");
+           },1000)         
+          </script></body></html>`
+      );
     }
     user.set({ emailVerified: true });
     const savedUser = await user.save();
@@ -313,7 +320,7 @@ router.get("/verify-email/:verifyToken", async function(req, res) {
           <p>Verified sucessfully!..Redirecting to <a href=${redirectUrl}>login page</a></p>
           <script>
            setTimeout(function(){
-             window.location.replace(${redirectUrl});
+             window.location.replace("${redirectUrl}");
            },1000)         
           </script></body></html>`
     );
@@ -344,7 +351,7 @@ router.post("/forgot-password", async function(req, res, next) {
     const emailRes = await sendResetEmail({
       email,
       name: user.name,
-      resetToken: user.resetToken
+      resetToken: savedUser.resetToken
     });
     return res.json({
       success: true,

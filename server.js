@@ -8,7 +8,12 @@ const helmet = require("helmet");
 const routes = require("./routes");
 const collegeRoutes = require("./routes/colleges");
 const authRoutes = require("./routes/auth");
+<<<<<<< HEAD
 const dataRoutes = require("./routes/data");
+=======
+const participantRoutes = require("./routes/participants");
+
+>>>>>>> 2ffabd6f61c0849dbbd456f073b33a046b7ecfcc
 const errorHandler = require("./utils/error-handler");
 const allowedOrigins = [
   "https://www.avishkarmnnit.in",
@@ -47,6 +52,7 @@ app.use("/api", authRoutes);
 app.use("/api", collegeRoutes);
 app.use("/api", routes);
 app.use(dataRoutes);
+app.use("/api/orgs/", participantRoutes);
 app.use(errorHandler);
 app.use("*", function(req, res) {
   res.sendStatus(404);
