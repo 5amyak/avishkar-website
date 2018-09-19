@@ -12,15 +12,17 @@
 <body>
     <table>
             <tr>
-                    <th>name</th>
-                    <th>phone</th>
-                    <th>email</th>
-                    <th>city</th>
-                    <th>college</th>
-                    <th>events</th>
+                    <th>SNo</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>City</th>
+                    <th>College</th>
+                    <th>Events</th>
                   </tr>
         <% for(var i=0; i < users.length; i++) { %>
            <tr>
+             <td><%= i+1 %></td>
              <td><%= users[i].name %></td>
              <td><%= users[i].phone %></td>
              <td><%= users[i].email %></td>
