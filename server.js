@@ -20,6 +20,7 @@ mongoose.connect(
   { useNewUrlParser: true }
 );
 const app = express();
+app.set("view engine", "ejs");
 app.use(helmet());
 //CORS handler
 app.use("/api", function(req, res, next) {
@@ -45,7 +46,7 @@ app.use("/api", bodyParser.json());
 app.use("/api", authRoutes);
 app.use("/api", collegeRoutes);
 app.use("/api", routes);
-app.use("/api", dataRoutes);
+app.use(dataRoutes);
 app.use(errorHandler);
 app.use("*", function(req, res) {
   res.sendStatus(404);

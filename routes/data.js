@@ -18,7 +18,14 @@ router.get("/registered-users", async function(req, res, next) {
     const users = await User.find({
       "registeredEvents.0": { $exists: true }
     }).select(projection);
-    res.json(users);
+    const modifiedUsers = users.map(function(user) {
+      const events = user.registeredEvents.map(function(event) {
+        return event.name;
+      });
+      user.events = events;
+      return user;
+    });
+    res.render("registered-users", { users: modifiedUsers });
   } catch (err) {
     next(err);
   }
