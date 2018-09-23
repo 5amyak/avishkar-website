@@ -52,7 +52,7 @@ router.get("/registered-teams", async function(req, res, next) {
     const teams = await Team.find({ status: "created" })
       .select(teamProjection)
       .populate("userRefs", userProjection);
-    res.json(teams);
+    res.render("registered-teams", { teams });
   } catch (err) {
     next(err);
   }
