@@ -30,12 +30,31 @@ router.get("/registered-users", async function(req, res, next) {
     next(err);
   }
 });
-// router.get("/registered-teams", async function(req, res, next) {
-//   try {
-//     const teams = await Team.find({}).populate();
-//     res.json(teams);
-//   } catch (err) {
-//     next(err);
-//   }
-// });
+
+router.get("/registered-teams", async function(req, res, next) {
+  try {
+    const teamProjection = {
+      name: 1,
+      event: 1,
+      date: 1,
+      _id: 0
+    };
+    const userProjection = {
+      name: 1,
+      email: 1,
+      phone: 1,
+      city: 1,
+      college: 1,
+      regNum: 1,
+      courseYear: 1,
+      _id: 0
+    };
+    const teams = await Team.find({ status: "created" })
+      .select(teamProjection)
+      .populate("userRefs", userProjection);
+    res.json(teams);
+  } catch (err) {
+    next(err);
+  }
+});
 module.exports = router;
