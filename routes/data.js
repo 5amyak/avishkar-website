@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
 const Team = require("../models/team");
+const Event = require("../models/event");
 router.get("/registered-users", async function(req, res, next) {
   try {
     const projection = {
@@ -31,8 +32,13 @@ router.get("/registered-users", async function(req, res, next) {
   }
 });
 
-router.get("/registered-teams", async function(req, res, next) {
+router.get("/registered-teams/:eventName", async function(req, res, next) {
   try {
+    const { eventName } = req.params;
+    const event = await Event.findOne({ displayName: eventName });
+    if (!event) {
+      return res.send("Incorrect event url!");
+    }
     const teamProjection = {
       name: 1,
       event: 1,
@@ -49,7 +55,7 @@ router.get("/registered-teams", async function(req, res, next) {
       courseYear: 1,
       _id: 0
     };
-    const teams = await Team.find({ status: "created" })
+    const teams = await Team.find({ status: "created", event: event.name })
       .select(teamProjection)
       .populate("userRefs", userProjection);
     res.render("registered-teams", { teams });
