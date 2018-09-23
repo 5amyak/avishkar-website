@@ -1,0 +1,57 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+</head>
+<body>
+    <table>
+            <tr>
+                    <th>sno</th>
+                    <th>team</th>
+                    <th>event</th>
+                    <th>date</th>
+                    <th>name1</th>
+                    <th>phone1</th>
+                    <th>email1</th>
+                    <th>city1</th>
+                    <th>college1</th>
+                    <th>name2</th>
+                    <th>phone2</th>
+                    <th>email2</th>
+                    <th>city2</th>
+                    <th>college2</th>
+                    <th>name3</th>
+                    <th>phone3</th>
+                    <th>email3</th>
+                    <th>city3</th>
+                    <th>college3</th>
+                    <th>name4</th>
+                    <th>phone4</th>
+                    <th>email4</th>
+                    <th>city4</th>
+                    <th>college4</th>
+                  </tr>
+        <% for(var i=0; i < teams.length; i++) { %>
+           <tr>
+             <td><%= i+1 %></td>
+             <td><%= teams[i].name %></td>
+             <td><%= teams[i].event %></td>
+             <td><%= teams[i].date.toDateString() %></td>
+             <% for(var j=0; j < teams[i].userRefs.length; j++) { %>
+              <td><%= teams[i].userRefs[j].name %></td>
+              <td><%= teams[i].userRefs[j].phone %></td>
+              <td><%= teams[i].userRefs[j].email %></td>
+              <td><%= teams[i].userRefs[j].city %></td>
+              <td><%= teams[i].userRefs[j].college %></td>
+              <% } %>
+           </tr>
+        <% } %>
+        </table>
+</body>
+</html>
