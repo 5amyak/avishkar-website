@@ -668,8 +668,8 @@ router.get("/bank-details", isAuthenticated, async function(req, res, next) {
 router.post("/bank-details", isAuthenticated, async function(req, res, next) {
   try {
     const userId = req.decoded.id;
-    const { account, bank, ifsc, branch } = req.body;
-    const bankDetails = { account, bank, ifsc, branch };
+    const { account, bank, ifsc, branchCode } = req.body;
+    const bankDetails = { account, bank, ifsc, branchCode };
     const user = await User.findById(userId);
     user.bankDetails = bankDetails;
     user.isModified("bankDetails");
