@@ -22,7 +22,13 @@ const userSchema = mongoose.Schema({
   emailVerified: { type: Boolean, default: false },
   verifyToken: { type: String },
   resetToken: { type: String },
-  resetTokenExpiry: { type: Date }
+  resetTokenExpiry: { type: Date },
+  bankDetails: {
+    account: { type: String },
+    ifsc: { type: String },
+    bank: { type: String },
+    branchCode: { type: String }
+  }
 });
 
 const User = mongoose.model("User", userSchema);
