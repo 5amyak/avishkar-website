@@ -646,4 +646,40 @@ router.get("/all-user-teams", isAuthenticated, async function(req, res, next) {
     next(err);
   }
 });
+//bank details
+router.get("/bank-details", isAuthenticated, async function(req, res, next) {
+  try {
+    const userId = req.decoded.id;
+    const projection = {
+      bankDetails: 1,
+      _id: 0
+    };
+    const user = await User.findById(userId)
+      .select(projection)
+      .lean();
+    res.json({
+      success: true,
+      user
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+router.post("/bank-details", isAuthenticated, async function(req, res, next) {
+  try {
+    const userId = req.decoded.id;
+    const { account, bank, ifsc, branch } = req.body;
+    const bankDetails = { account, bank, ifsc, branch };
+    const user = await User.findById(userId);
+    user.bankDetails = bankDetails;
+    user.isModified("bankDetails");
+    const savedUser = await user.save();
+    res.json({
+      success: true,
+      message: "Account info saved!"
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 module.exports = router;
