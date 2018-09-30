@@ -63,4 +63,21 @@ router.get("/registered-teams/:eventName", async function(req, res, next) {
     next(err);
   }
 });
+router.get("/bank-details", async function(req, res, next) {
+  try {
+    const projection = {
+      bankDetails: 1,
+      name: 1,
+      email: 1,
+      phone: 1,
+      _id: 0
+    };
+    const users = await User.find({ bankDetails: { $exists: true } })
+      .select(projection)
+      .lean();
+    res.render("bank-details", { users });
+  } catch (err) {
+    next(err);
+  }
+});
 module.exports = router;
