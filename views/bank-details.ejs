@@ -1,0 +1,38 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+</head>
+<body>
+    <table>
+            <tr>
+                    <th>SNo</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Acc No</th>
+                    <th>IFSC</th>
+                    <th>Branch Code</th>
+                    <th>Bank</th>
+                  </tr>
+        <% for(var i=0; i < users.length; i++) { %>
+           <tr>
+             <td><%= i+1 %></td>
+             <td><%= users[i].name %></td>
+             <td><%= users[i].phone %></td>
+             <td><%= users[i].email %></td>
+             <td><%= users[i].bankDetails.account %></td>
+             <td><%= users[i].bankDetails.ifsc %></td>
+             <td><%= users[i].bankDetails.branchCode %></td>
+             <td><%= users[i].bankDetails.bank %></td>
+           </tr>
+        <% } %>
+        </table>
+</body>
+</html>
