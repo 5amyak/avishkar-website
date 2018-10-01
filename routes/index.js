@@ -16,7 +16,11 @@ router.get("/profile", isAuthenticated, async function(req, res, next) {
       city: 1,
       college: 1,
       updatedProfile: 1,
-      picture: 1
+      picture: 1,
+      phone: 1,
+      regNum: 1,
+      course: 1,
+      courseYear: 1
     };
     const user = await User.findOne({ _id: userid }, projection);
     res.json({ profile: user });
@@ -29,12 +33,12 @@ router.post("/update-profile", isAuthenticated, async function(req, res, next) {
   try {
     const profile = req.body;
     const user = await User.findById(req.decoded.id);
-    if (user.updatedProfile) {
-      return res.status(400).json({
-        success: false,
-        message: "You had already updated the profile!"
-      });
-    }
+    // if (user.updatedProfile) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "You had already updated the profile!"
+    //   });
+    // }
     profile.updatedProfile = true;
     user.set(profile);
     const savedUser = await user.save();
