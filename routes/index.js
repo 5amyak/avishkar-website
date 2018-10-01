@@ -39,6 +39,7 @@ router.post("/update-profile", isAuthenticated, async function(req, res, next) {
     //     message: "You had already updated the profile!"
     //   });
     // }
+    if ("email" in profile) return res.sendStatus(400);
     profile.updatedProfile = true;
     user.set(profile);
     const savedUser = await user.save();
